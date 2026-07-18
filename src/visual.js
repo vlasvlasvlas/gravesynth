@@ -72,12 +72,15 @@ export function initVisuals() {
         const hasFx      = lineData.fx && lineData.fx !== 'none';
         const style      = lineData.style    ?? 'solid';
         const gapRatio   = lineData.gapRatio ?? 0.4;
+        const platformLength = lineData.platformLength ?? 120;
+        const platformOffset = lineData.platformOffset ?? 0;
         const x1 = lineData.startX, y1 = lineData.startY;
         const x2 = lineData.endX,   y2 = lineData.endY;
         const dx = x2 - x1, dy = y2 - y1;
         const len = Math.sqrt(dx * dx + dy * dy);
         if (len < 1) return;
         const nx = dx / len, ny = dy / len;
+        const angle = Math.atan2(dy, dx);
 
         const baseColor = STATE.darkMode ? p.color(0, 0, 85) : p.color(0, 0, 15);
         const selColor  = p.color(210, 100, 55);
@@ -98,6 +101,27 @@ export function initVisuals() {
             const t1 = Math.min(d + dashLen, len);
             p.line(x1 + nx * d, y1 + ny * d, x1 + nx * t1, y1 + ny * t1);
           }
+        } else if (style === 'moving') {
+          const railColor = STATE.darkMode ? p.color(0, 0, 70, 0.28) : p.color(0, 0, 20, 0.2);
+          const pLen = Math.max(4, Math.min(Math.max(20, platformLength), len));
+          const travel = Math.max(0, len - pLen);
+          const centerD = Math.max(0, Math.min(platformOffset, travel)) + pLen / 2;
+          const px = x1 + nx * centerD;
+          const py = y1 + ny * centerD;
+
+          p.stroke(railColor);
+          p.strokeWeight(1);
+          p.line(x1, y1, x2, y2);
+
+          p.push();
+          p.translate(px, py);
+          p.rotate(angle);
+          p.stroke(strokeCol);
+          p.strokeWeight(isSelected ? 2.5 : 2);
+          p.fill(STATE.darkMode ? p.color(0, 0, 12) : p.color(0, 0, 92));
+          p.rectMode(p.CENTER);
+          p.rect(0, 0, pLen, 14, 3);
+          p.pop();
         } else {
           p.line(x1, y1, x2, y2);
         }

@@ -6,6 +6,13 @@ export let engine;
 export let world;
 
 let _ground, _leftWall, _rightWall;
+let _lastMovingUpdate = performance.now();
+
+const LINE_THICKNESS = 12;
+const DASH_THICKNESS = 10;
+const MOVING_PLATFORM_THICKNESS = 14;
+const DEFAULT_PLATFORM_SPEED = 90;
+const DEFAULT_PLATFORM_LENGTH = 120;
 
 export function updateWalls() {
   const W = window.innerWidth, H = window.innerHeight;
@@ -50,6 +57,10 @@ export function initPhysics() {
     const now    = performance.now();
     const bodies = Matter.Composite.allBodies(world);
 
+    const dt = Math.min(Math.max((now - _lastMovingUpdate) / 1000, 0), 1 / 30);
+    _lastMovingUpdate = now;
+    updateMovingLines(dt);
+
     // Glow decay + deferred body removal (safe — collected first, removed after loop)
     const toRemove = [];
     bodies.forEach(b => {
@@ -65,15 +76,19 @@ export function initPhysics() {
         const dx = vac.x - body.position.x;
         const dy = vac.y - body.position.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < vac.radius && dist > 0) {
+        const ballRadius = body.circleRadius || 0;
+        const surfaceDist = Math.max(0, dist - ballRadius);
+        if (surfaceDist < vac.radius) {
           // Wake sleeping bodies so force is applied
           if (body.isSleeping) Matter.Sleeping.set(body, false);
-          const mag = (vac.power * 0.0001) / (dist * 0.01 + 1);
+          const safeDist = dist || 1;
+          const massScale = Math.max(1, body.mass || 1);
+          const mag = ((vac.power * 0.00012) * massScale) / (surfaceDist * 0.01 + 1);
           Matter.Body.applyForce(body, body.position, {
-            x: (dx / dist) * mag,
-            y: (dy / dist) * mag
+            x: (dx / safeDist) * mag,
+            y: (dy / safeDist) * mag
           });
-          if (dist < 20 && !body.isDying) {
+          if (dist < ballRadius + 20 && !body.isDying) {
             body.isDying  = true;
             body.deathTime = now + 200;
             physicsEvents.dispatchEvent(new CustomEvent('absorbed', { detail: { body } }));
@@ -134,7 +149,7 @@ export function spawnBall(portal) {
   Matter.World.add(world, ball);
 }
 
-// opts: { style, gapRatio, fx, fxAmount, restitution }
+// opts: { style, gapRatio, fx, fxAmount, restitution, platformSpeed, platformLength }
 // Dashed lines create multiple physics bodies — real gaps balls can pass through.
 export function drawLine(x1, y1, x2, y2, opts = {}) {
   const dx  = x2 - x1, dy = y2 - y1;
@@ -144,44 +159,24 @@ export function drawLine(x1, y1, x2, y2, opts = {}) {
   const style       = opts.style       ?? 'solid';
   const gapRatio    = opts.gapRatio    ?? 0.4;
   const restitution = opts.restitution ?? 0.7;
-  const angle       = Math.atan2(dy, dx);
-  const nx = dx / len, ny = dy / len;
   const lineId      = 'line_' + Date.now();
 
-  const bodyOpts = { isStatic: true, angle, label: 'line', friction: 0, restitution };
-  const bodyIds  = [];
-
-  if (style === 'dashed') {
-    // dashLen fixed; gap grows with gapRatio so balls can pass through
-    const dashLen = 18;
-    const gap     = 24 + gapRatio * 90; // 24px min → 114px max
-    const step    = dashLen + gap;
-    for (let d = 0; d < len; d += step) {
-      const segLen = Math.min(dashLen, len - d);
-      if (segLen < 4) break;
-      const mx = x1 + nx * (d + segLen / 2);
-      const my = y1 + ny * (d + segLen / 2);
-      const seg = Matter.Bodies.rectangle(mx, my, segLen, 10, bodyOpts);
-      seg._lineId = lineId;
-      Matter.World.add(world, seg);
-      bodyIds.push(seg.id);
-    }
-  } else {
-    const body = Matter.Bodies.rectangle(x1 + dx / 2, y1 + dy / 2, len, 12, bodyOpts);
-    body._lineId = lineId;
-    Matter.World.add(world, body);
-    bodyIds.push(body.id);
-  }
-
-  STATE.lines.push({
+  const lineData = {
     id: lineId,
-    bodyIds,                              // always an array
+    bodyIds: [],                          // always an array
     startX: x1, startY: y1, endX: x2, endY: y2,
     style, gapRatio,
     fx:       opts.fx       ?? 'none',
     fxAmount: opts.fxAmount ?? 0.5,
-    restitution
-  });
+    restitution,
+    platformSpeed:  opts.platformSpeed  ?? DEFAULT_PLATFORM_SPEED,
+    platformLength: opts.platformLength ?? Math.min(DEFAULT_PLATFORM_LENGTH, len),
+    platformOffset: opts.platformOffset ?? 0,
+    platformDirection: opts.platformDirection ?? 1,
+  };
+
+  lineData.bodyIds = createLineBodies(lineData);
+  STATE.lines.push(lineData);
 }
 
 // Returns STATE.lines entry for a given body id
@@ -194,39 +189,132 @@ export function rebuildLine(lineId) {
   const ld = STATE.lines.find(l => l.id === lineId);
   if (!ld) return;
 
-  const allBodies = Matter.Composite.allBodies(world);
-  ld.bodyIds.forEach(bid => {
-    const b = allBodies.find(b2 => b2.id === bid);
-    if (b) Matter.World.remove(world, b);
-  });
+  removeLineBodies(ld);
 
-  const { startX: x1, startY: y1, endX: x2, endY: y2, style, gapRatio, restitution } = ld;
+  const { startX: x1, startY: y1, endX: x2, endY: y2 } = ld;
   const dx = x2 - x1, dy = y2 - y1;
   const len = Math.sqrt(dx * dx + dy * dy);
   if (len < 5) { STATE.lines = STATE.lines.filter(l => l.id !== lineId); return; }
 
-  const angle   = Math.atan2(dy, dx);
-  const nx = dx / len, ny = dy / len;
-  const bOpts   = { isStatic: true, angle, label: 'line', friction: 0, restitution };
-  const newIds  = [];
+  ld.bodyIds = createLineBodies(ld);
+}
+
+function removeLineBodies(lineData) {
+  const allBodies = Matter.Composite.allBodies(world);
+  lineData.bodyIds.forEach(bid => {
+    const body = allBodies.find(b => b.id === bid);
+    if (body) Matter.World.remove(world, body);
+  });
+}
+
+function getLineMetrics(lineData) {
+  const x1 = lineData.startX, y1 = lineData.startY;
+  const x2 = lineData.endX,   y2 = lineData.endY;
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  return {
+    x1, y1, x2, y2, dx, dy, len,
+    angle: Math.atan2(dy, dx),
+    nx: len ? dx / len : 1,
+    ny: len ? dy / len : 0,
+  };
+}
+
+function getPlatformLength(lineData, lineLength) {
+  const requested = Number(lineData.platformLength ?? DEFAULT_PLATFORM_LENGTH);
+  return Math.max(4, Math.min(Math.max(20, requested), lineLength));
+}
+
+function createLineBodies(lineData) {
+  const { x1, y1, dx, dy, len, angle, nx, ny } = getLineMetrics(lineData);
+  const style = lineData.style ?? 'solid';
+  const restitution = lineData.restitution ?? 0.7;
+  const bodyOpts = { isStatic: true, angle, label: 'line', friction: 0, restitution };
+  const bodyIds = [];
 
   if (style === 'dashed') {
-    const dashLen = 18, gap = 24 + gapRatio * 90, step = dashLen + gap;
+    // dashLen fixed; gap grows with gapRatio so balls can pass through
+    const dashLen = 18;
+    const gap     = 24 + (lineData.gapRatio ?? 0.4) * 90; // 24px min -> 114px max
+    const step    = dashLen + gap;
     for (let d = 0; d < len; d += step) {
       const segLen = Math.min(dashLen, len - d);
       if (segLen < 4) break;
-      const mx = x1 + nx * (d + segLen / 2), my = y1 + ny * (d + segLen / 2);
-      const seg = Matter.Bodies.rectangle(mx, my, segLen, 10, bOpts);
-      seg._lineId = lineId;
+      const mx = x1 + nx * (d + segLen / 2);
+      const my = y1 + ny * (d + segLen / 2);
+      const seg = Matter.Bodies.rectangle(mx, my, segLen, DASH_THICKNESS, bodyOpts);
+      seg._lineId = lineData.id;
       Matter.World.add(world, seg);
-      newIds.push(seg.id);
+      bodyIds.push(seg.id);
     }
-  } else {
-    const b = Matter.Bodies.rectangle(x1 + dx / 2, y1 + dy / 2, len, 12, bOpts);
-    b._lineId = lineId;
-    Matter.World.add(world, b);
-    newIds.push(b.id);
+    return bodyIds;
   }
 
-  ld.bodyIds = newIds;
+  if (style === 'moving') {
+    const platformLen = getPlatformLength(lineData, len);
+    const travel = Math.max(0, len - platformLen);
+    lineData.platformOffset = Math.max(0, Math.min(lineData.platformOffset ?? 0, travel));
+    lineData.platformDirection = lineData.platformDirection === -1 ? -1 : 1;
+    const centerD = lineData.platformOffset + platformLen / 2;
+    const body = Matter.Bodies.rectangle(
+      x1 + nx * centerD,
+      y1 + ny * centerD,
+      platformLen,
+      MOVING_PLATFORM_THICKNESS,
+      bodyOpts
+    );
+    body._lineId = lineData.id;
+    body._movingPlatform = true;
+    Matter.World.add(world, body);
+    bodyIds.push(body.id);
+    return bodyIds;
+  }
+
+  const body = Matter.Bodies.rectangle(x1 + dx / 2, y1 + dy / 2, len, LINE_THICKNESS, bodyOpts);
+  body._lineId = lineData.id;
+  Matter.World.add(world, body);
+  bodyIds.push(body.id);
+  return bodyIds;
+}
+
+function updateMovingLines(dt) {
+  if (dt <= 0) return;
+  const allBodies = Matter.Composite.allBodies(world);
+
+  STATE.lines.forEach(lineData => {
+    if (lineData.style !== 'moving') return;
+    const body = allBodies.find(b => lineData.bodyIds.includes(b.id));
+    if (!body) return;
+
+    const { x1, y1, len, angle, nx, ny } = getLineMetrics(lineData);
+    if (len < 5) return;
+
+    const platformLen = getPlatformLength(lineData, len);
+    const travel = Math.max(0, len - platformLen);
+    const speed = Math.max(0, Number(lineData.platformSpeed ?? DEFAULT_PLATFORM_SPEED));
+    let offset = Math.max(0, Math.min(lineData.platformOffset ?? 0, travel));
+    let direction = lineData.platformDirection === -1 ? -1 : 1;
+
+    if (travel > 0 && speed > 0) {
+      offset += direction * speed * dt;
+      while (offset < 0 || offset > travel) {
+        if (offset > travel) {
+          offset = travel - (offset - travel);
+          direction = -1;
+        } else {
+          offset = -offset;
+          direction = 1;
+        }
+      }
+    }
+
+    lineData.platformOffset = Math.max(0, Math.min(offset, travel));
+    lineData.platformDirection = direction;
+
+    const centerD = lineData.platformOffset + platformLen / 2;
+    const nextPosition = { x: x1 + nx * centerD, y: y1 + ny * centerD };
+    Matter.Body.setAngle(body, angle);
+    Matter.Body.setPosition(body, nextPosition, true);
+    if (speed === 0 || travel === 0) Matter.Body.setVelocity(body, { x: 0, y: 0 });
+  });
 }

@@ -432,7 +432,20 @@ const FX_AMOUNT_LABELS = {
 };
 
 function renderLineForm(container, data) {
-  const d = { style: 'solid', gapRatio: 0.4, fx: 'none', fxAmount: 0.5, restitution: 0.7, ...data };
+  const lineLen = Math.hypot(data.endX - data.startX, data.endY - data.startY);
+  const maxPlatformLength = Math.max(5, Math.round(lineLen));
+  const minPlatformLength = Math.min(20, maxPlatformLength);
+  const d = {
+    style: 'solid',
+    gapRatio: 0.4,
+    fx: 'none',
+    fxAmount: 0.5,
+    restitution: 0.7,
+    platformSpeed: 90,
+    platformLength: Math.max(minPlatformLength, Math.min(120, maxPlatformLength)),
+    ...data
+  };
+  d.platformLength = Math.max(minPlatformLength, Math.min(d.platformLength, maxPlatformLength));
 
   const fxOptions = [
     ['none',             'Sin efecto'],
@@ -454,6 +467,7 @@ function renderLineForm(container, data) {
       <div class="toggle-row">
         <button class="toggle-btn ${d.style === 'solid'  ? 'active' : ''}" data-style="solid">Sólida</button>
         <button class="toggle-btn ${d.style === 'dashed' ? 'active' : ''}" data-style="dashed">Punteada</button>
+        <button class="toggle-btn ${d.style === 'moving' ? 'active' : ''}" data-style="moving">Móvil</button>
       </div>
     </div>
     <div class="form-group" id="gap-group" style="${d.style === 'dashed' ? '' : 'display:none'}">
@@ -461,6 +475,20 @@ function renderLineForm(container, data) {
       <div class="bpm-row">
         <input type="range" id="prop-gap" value="${d.gapRatio}" min="0.05" max="1" step="0.05" />
         <span id="gap-display">${Math.round(d.gapRatio * 100)}%</span>
+      </div>
+    </div>
+    <div class="form-group" id="platform-speed-group" style="${d.style === 'moving' ? '' : 'display:none'}">
+      <label>Velocidad de plataforma</label>
+      <div class="bpm-row">
+        <input type="range" id="prop-platform-speed" value="${d.platformSpeed}" min="0" max="320" step="5" />
+        <span id="platform-speed-display">${Math.round(d.platformSpeed)}</span>
+      </div>
+    </div>
+    <div class="form-group" id="platform-length-group" style="${d.style === 'moving' ? '' : 'display:none'}">
+      <label>Superficie de plataforma</label>
+      <div class="bpm-row">
+        <input type="range" id="prop-platform-length" value="${d.platformLength}" min="${minPlatformLength}" max="${maxPlatformLength}" step="5" />
+        <span id="platform-length-display">${Math.round(d.platformLength)}</span>
       </div>
     </div>
     <div class="form-group">
@@ -492,9 +520,15 @@ function renderLineForm(container, data) {
       container.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const style = btn.getAttribute('data-style');
-      updateObjectData(data.id, { style });
+      updateObjectData(data.id, {
+        style,
+        platformSpeed: data.platformSpeed ?? 90,
+        platformLength: data.platformLength ?? Math.min(120, maxPlatformLength)
+      });
       if (window.notifyLineRebuild) window.notifyLineRebuild(data.id);
       document.getElementById('gap-group').style.display = style === 'dashed' ? '' : 'none';
+      document.getElementById('platform-speed-group').style.display = style === 'moving' ? '' : 'none';
+      document.getElementById('platform-length-group').style.display = style === 'moving' ? '' : 'none';
     });
   });
 
@@ -502,6 +536,19 @@ function renderLineForm(container, data) {
     const val = parseFloat(e.target.value);
     document.getElementById('gap-display').textContent = Math.round(val * 100) + '%';
     updateObjectData(data.id, { gapRatio: val });
+    if (window.notifyLineRebuild) window.notifyLineRebuild(data.id);
+  });
+
+  document.getElementById('prop-platform-speed').addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    document.getElementById('platform-speed-display').textContent = Math.round(val);
+    updateObjectData(data.id, { platformSpeed: val });
+  });
+
+  document.getElementById('prop-platform-length').addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    document.getElementById('platform-length-display').textContent = Math.round(val);
+    updateObjectData(data.id, { platformLength: val });
     if (window.notifyLineRebuild) window.notifyLineRebuild(data.id);
   });
 

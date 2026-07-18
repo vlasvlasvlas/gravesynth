@@ -38,6 +38,7 @@ npm run preview  # preview del build
 | Cuadrado + punto | Portal | `P` | Emisor sonoro — escupe pelotas que caen con gravedad |
 | Línea sólida | Línea Plena | `L` | Superficie continua — cada impacto dispara una nota |
 | Línea dash | Línea Punteada | `D` | Superficie con gaps — genera ritmos mecánicos naturales |
+| Línea móvil | Plataforma Móvil | `L` | Superficie corta que viaja de un extremo al otro del riel |
 | Círculos | Aspiradora | `V` | Agujero negro — absorbe pelotas para limpiar el caos |
 | Borrador | Borrador | `E` | Elimina cualquier objeto del canvas |
 
