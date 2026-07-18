@@ -2,49 +2,101 @@ import { STATE, getSelectedObject, updateObjectData } from './state.js';
 import * as yaml from 'js-yaml';
 
 const PRESETS = {
-  moog: `
+  // Acid House 303: saw/square simple, filtro resonante y decay corto.
+  acid303: `
+type: "MonoSynth"
+portamento: 0.06
+oscillator:
+  type: "sawtooth"
+envelope:
+  attack: 0.003
+  decay: 0.18
+  sustain: 0.18
+  release: 0.35
+filter:
+  type: "lowpass"
+  Q: 12
+  rolloff: -24
+filterEnvelope:
+  attack: 0.002
+  decay: 0.22
+  sustain: 0.08
+  release: 0.25
+  baseFrequency: 90
+  octaves: 5.8
+`.trim(),
+
+  // Detroit Techno: bajo analogico seco, repetitivo y futurista.
+  detroittechno: `
+type: "MonoSynth"
+portamento: 0.025
+oscillator:
+  type: "pulse"
+  width: 0.42
+envelope:
+  attack: 0.004
+  decay: 0.14
+  sustain: 0.35
+  release: 0.55
+filter:
+  type: "lowpass"
+  Q: 3
+  rolloff: -24
+filterEnvelope:
+  attack: 0.004
+  decay: 0.25
+  sustain: 0.15
+  release: 0.35
+  baseFrequency: 150
+  octaves: 4.2
+`.trim(),
+
+  // Electro 808: linea cuadrada/funk, transiente claro y cola controlada.
+  electro808: `
+type: "FMSynth"
+harmonicity: 1.5
+modulationIndex: 4
+oscillator:
+  type: "square"
+modulation:
+  type: "sine"
+envelope:
+  attack: 0.002
+  decay: 0.28
+  sustain: 0.25
+  release: 0.75
+modulationEnvelope:
+  attack: 0.001
+  decay: 0.2
+  sustain: 0.12
+  release: 0.35
+`.trim(),
+
+  // Dub Techno: stab oscuro, ataque blando y release largo para eco/reverb.
+  dubtechno: `
 type: "MonoSynth"
 oscillator:
   type: "sawtooth"
 envelope:
-  attack: 0.001
-  decay: 0.1
-  sustain: 0.5
-  release: 1
+  attack: 0.08
+  decay: 0.55
+  sustain: 0.45
+  release: 2.4
 filter:
-  Q: 2
   type: "lowpass"
+  Q: 4
   rolloff: -24
 filterEnvelope:
-  attack: 0.001
-  decay: 0.2
-  sustain: 0.5
-  release: 2
-  baseFrequency: 200
-  octaves: 4
+  attack: 0.12
+  decay: 0.75
+  sustain: 0.25
+  release: 2.6
+  baseFrequency: 220
+  octaves: 1.6
 `.trim(),
 
-  spacelady: `
-type: "FMSynth"
-harmonicity: 3
-modulationIndex: 10
-oscillator:
-  type: "sine"
-modulation:
-  type: "square"
-envelope:
-  attack: 0.01
-  decay: 0.5
-  sustain: 0.2
-  release: 2
-modulationEnvelope:
-  attack: 0.5
-  decay: 0.1
-  sustain: 0.2
-  release: 0.5
-`.trim(),
-
-  cosmos: `
+  // Ambient tape-loop: entrada lenta, notas sostenidas y modulacion suave.
+  ambienttape: `
 type: "AMSynth"
 harmonicity: 0.5
 oscillator:
@@ -52,59 +104,160 @@ oscillator:
 modulation:
   type: "sine"
 envelope:
-  attack: 0.5
+  attack: 1.6
+  decay: 2.5
+  sustain: 0.9
+  release: 6
+modulationEnvelope:
+  attack: 2.5
   decay: 1
   sustain: 0.8
   release: 4
-modulationEnvelope:
-  attack: 0.5
-  decay: 0.1
-  sustain: 1
-  release: 0.5
 `.trim(),
 
-  vangelis: `
+  // Berlin School: pulso de secuenciador analogico, brillante pero no clicky.
+  berlinschool: `
 type: "MonoSynth"
+portamento: 0.015
 oscillator:
   type: "sawtooth"
 envelope:
-  attack: 1.0
-  decay: 2.0
-  sustain: 0.8
-  release: 3.0
+  attack: 0.015
+  decay: 0.28
+  sustain: 0.35
+  release: 0.9
 filter:
   type: "lowpass"
-  Q: 1
+  Q: 2.5
+  rolloff: -24
 filterEnvelope:
-  attack: 1.0
-  decay: 2.0
-  sustain: 0.5
-  release: 3.0
-  baseFrequency: 300
-  octaves: 3
+  attack: 0.02
+  decay: 0.45
+  sustain: 0.2
+  release: 0.8
+  baseFrequency: 140
+  octaves: 3.4
 `.trim(),
 
-  daftpunk: `
+  // Robot pop: onda cuadrada limpia, frase corta y mecanica.
+  robotpop: `
 type: "MonoSynth"
 oscillator:
   type: "square"
 envelope:
-  attack: 0.005
-  decay: 0.1
-  sustain: 0.1
-  release: 0.5
+  attack: 0.006
+  decay: 0.12
+  sustain: 0.2
+  release: 0.25
 filter:
   type: "lowpass"
-  Q: 5
+  Q: 2.5
+  rolloff: -12
 filterEnvelope:
-  attack: 0.005
-  decay: 0.1
-  sustain: 0
-  release: 0.1
-  baseFrequency: 100
-  octaves: 5
+  attack: 0.006
+  decay: 0.18
+  sustain: 0.12
+  release: 0.2
+  baseFrequency: 450
+  octaves: 2.1
+`.trim(),
+
+  // FM glass: campana digital con ataque suave y cola usable.
+  fmglass: `
+type: "FMSynth"
+harmonicity: 2.01
+modulationIndex: 8
+oscillator:
+  type: "sine"
+modulation:
+  type: "sine"
+envelope:
+  attack: 0.035
+  decay: 1.8
+  sustain: 0.06
+  release: 2.2
+modulationEnvelope:
+  attack: 0.02
+  decay: 1.2
+  sustain: 0.02
+  release: 1.5
+`.trim(),
+
+  // Deep organ drift: ataque lento/intermedio para capas con poco golpe inicial.
+  deeporgan: `
+type: "AMSynth"
+harmonicity: 1
+oscillator:
+  type: "sine"
+modulation:
+  type: "triangle"
+envelope:
+  attack: 0.45
+  decay: 0.8
+  sustain: 0.72
+  release: 3.2
+modulationEnvelope:
+  attack: 0.65
+  decay: 0.6
+  sustain: 0.55
+  release: 2.4
+`.trim(),
+
+  // French house pluck: pluck filtrado y rapido, mas generico que nombrar artistas.
+  frenchhousepluck: `
+type: "MonoSynth"
+oscillator:
+  type: "square"
+envelope:
+  attack: 0.004
+  decay: 0.09
+  sustain: 0.08
+  release: 0.42
+filter:
+  type: "lowpass"
+  Q: 7
+  rolloff: -24
+filterEnvelope:
+  attack: 0.004
+  decay: 0.12
+  sustain: 0.02
+  release: 0.18
+  baseFrequency: 140
+  octaves: 4.8
 `.trim()
 };
+
+const DEFAULT_PRESET = 'acid303';
+const PRESET_OPTIONS = [
+  ['acid303', 'Acid House 303'],
+  ['detroittechno', 'Detroit Techno Bass'],
+  ['electro808', 'Electro 808 Funk'],
+  ['dubtechno', 'Dub Techno Stab'],
+  ['ambienttape', 'Ambient Tape Loops'],
+  ['berlinschool', 'Berlin School Pulse'],
+  ['robotpop', 'Robot Pop Minimal'],
+  ['fmglass', 'FM Glass Bell'],
+  ['deeporgan', 'Deep Organ Drift'],
+  ['frenchhousepluck', 'French House Pluck'],
+];
+
+const LEGACY_PRESET_ALIASES = {
+  moog: 'acid303',
+  spacelady: 'fmglass',
+  cosmos: 'ambienttape',
+  vangelis: 'deeporgan',
+  daftpunk: 'frenchhousepluck',
+};
+
+function normalizePresetKey(key) {
+  if (key === 'custom') return 'custom';
+  if (PRESETS[key]) return key;
+  return LEGACY_PRESET_ALIASES[key] ?? DEFAULT_PRESET;
+}
+
+function getPresetYaml(key) {
+  return PRESETS[normalizePresetKey(key)];
+}
 
 export function initUI() {
   const body = document.body;
@@ -264,9 +417,10 @@ export function closeSidebar() {
 function renderPortalForm(container, data) {
   const d = {
     note: 'C', scale: 'pentatonic', mode: 'random', rpm: 60, size: 15, volume: -6,
-    synthPreset: 'moog', yamlConfig: PRESETS.moog,
+    synthPreset: DEFAULT_PRESET, yamlConfig: getPresetYaml(DEFAULT_PRESET),
     ...data
   };
+  d.synthPreset = normalizePresetKey(d.synthPreset);
 
   container.innerHTML = `
     <div class="form-group">
@@ -309,11 +463,9 @@ function renderPortalForm(container, data) {
       <label>Preset</label>
       <select id="prop-preset">
         <option value="custom"    ${d.synthPreset === 'custom'    ? 'selected' : ''}>Personalizado</option>
-        <option value="moog"      ${d.synthPreset === 'moog'      ? 'selected' : ''}>Moog (Sawtooth Bass)</option>
-        <option value="spacelady" ${d.synthPreset === 'spacelady' ? 'selected' : ''}>SpaceLady (FM Bells)</option>
-        <option value="cosmos"    ${d.synthPreset === 'cosmos'    ? 'selected' : ''}>Cosmos (AM Pads)</option>
-        <option value="vangelis"  ${d.synthPreset === 'vangelis'  ? 'selected' : ''}>Vangelis (Strings)</option>
-        <option value="daftpunk"  ${d.synthPreset === 'daftpunk'  ? 'selected' : ''}>DaftPunk (Pluck)</option>
+        ${PRESET_OPTIONS.map(([value, label]) =>
+          `<option value="${value}" ${d.synthPreset === value ? 'selected' : ''}>${label}</option>`
+        ).join('')}
       </select>
     </div>
     <div class="form-group">
@@ -584,13 +736,13 @@ function renderLineForm(container, data) {
 }
 
 export function createPortal(x, y) {
-  const parsedSynthDef = yaml.load(PRESETS.moog);
+  const parsedSynthDef = yaml.load(getPresetYaml(DEFAULT_PRESET));
   const portal = {
     id: 'portal_' + Date.now(),
     x, y,
     note: 'C', scale: 'pentatonic', mode: 'random', rpm: 60, size: 15, volume: -6,
-    synthPreset: 'moog',
-    yamlConfig: PRESETS.moog,
+    synthPreset: DEFAULT_PRESET,
+    yamlConfig: getPresetYaml(DEFAULT_PRESET),
     parsedSynthDef
   };
   STATE.portals.push(portal);

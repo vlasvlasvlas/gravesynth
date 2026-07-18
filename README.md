@@ -175,15 +175,22 @@ modulationEnvelope:
 
 ---
 
-### Los 5 presets incluidos
+### Presets incluidos
 
 | Preset | Tipo | Carácter |
 |--------|------|----------|
-| **Moog** | MonoSynth | Bajo analógico gordo, sawtooh con filtro lowpass resonante |
-| **SpaceLady** | FMSynth | Campanas FM etéreas, modulación alta, sonido de ciencia ficción |
-| **Cosmos** | AMSynth | Pads lentos y ondulantes, ataque largo, ideal para drones |
-| **Vangelis** | MonoSynth | Cuerdas sintéticas lentas, attack/release largo estilo Blade Runner |
-| **DaftPunk** | MonoSynth | Pluck corto con filtro punchy, cuadrada y resonancia alta |
+| **Acid House 303** | MonoSynth | Saw con filtro lowpass muy resonante, decay corto y portamento para líneas líquidas |
+| **Detroit Techno Bass** | MonoSynth | Pulso analógico seco, repetitivo, con filtro rápido y bajo presente |
+| **Electro 808 Funk** | FMSynth | Ataque inmediato, cuadrada/FM y cola corta para frases sintéticas tipo electro |
+| **Dub Techno Stab** | MonoSynth | Ataque blando, filtro oscuro y release largo; funciona muy bien con líneas con reverb/eco |
+| **Ambient Tape Loops** | AMSynth | Attack largo y sustain alto para capas lentas, drones y portales de baja RPM |
+| **Berlin School Pulse** | MonoSynth | Pulso secuenciado, saw brillante y release medio para arpegios hipnóticos |
+| **Robot Pop Minimal** | MonoSynth | Cuadrada limpia, frase corta y mecánica, buena para patrones repetitivos |
+| **FM Glass Bell** | FMSynth | Campana digital con ataque suavizado y cola usable |
+| **Deep Organ Drift** | AMSynth | Entrada lenta/intermedia, cuerpo estable y cola larga para colchones armónicos |
+| **French House Pluck** | MonoSynth | Pluck filtrado, rápido y resonante sin atarlo a un artista específico |
+
+Los presets priorizan rasgos de producción de estilos influyentes de la electrónica: 303 acid con filtro resonante, techno de Detroit con bajo mecánico, electro con timbre cuadrado/FM, dub techno con stabs filtrados y ambientes de tape-loop con ataques lentos.
 
 ---
 
