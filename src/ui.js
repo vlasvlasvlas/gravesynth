@@ -2,6 +2,42 @@ import { STATE, getSelectedObject, updateObjectData } from './state.js';
 import * as yaml from 'js-yaml';
 
 const PRESETS = {
+  // Basic sine: onda pura, sin filtro ni modulacion.
+  basicsine: `
+type: "Synth"
+oscillator:
+  type: "sine"
+envelope:
+  attack: 0.01
+  decay: 0.08
+  sustain: 0.35
+  release: 0.45
+`.trim(),
+
+  // Basic square: cuadrada directa y seca.
+  basicsquare: `
+type: "Synth"
+oscillator:
+  type: "square"
+envelope:
+  attack: 0.01
+  decay: 0.08
+  sustain: 0.35
+  release: 0.45
+`.trim(),
+
+  // Basic triangle: triangular simple, mas blanda que square.
+  basictriangle: `
+type: "Synth"
+oscillator:
+  type: "triangle"
+envelope:
+  attack: 0.01
+  decay: 0.08
+  sustain: 0.35
+  release: 0.45
+`.trim(),
+
   // Acid House 303: saw/square simple, filtro resonante y decay corto.
   acid303: `
 type: "MonoSynth"
@@ -227,8 +263,11 @@ filterEnvelope:
 `.trim()
 };
 
-const DEFAULT_PRESET = 'acid303';
+const DEFAULT_PRESET = 'robotpop';
 const PRESET_OPTIONS = [
+  ['basicsine', 'Basic Sine'],
+  ['basicsquare', 'Basic Square'],
+  ['basictriangle', 'Basic Triangle'],
   ['acid303', 'Acid House 303'],
   ['detroittechno', 'Detroit Techno Bass'],
   ['electro808', 'Electro 808 Funk'],

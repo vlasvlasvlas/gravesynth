@@ -179,6 +179,9 @@ modulationEnvelope:
 
 | Preset | Tipo | Carácter |
 |--------|------|----------|
+| **Basic Sine** | Synth | Seno puro, limpio, sin filtro ni modulación |
+| **Basic Square** | Synth | Cuadrada simple, seca y directa |
+| **Basic Triangle** | Synth | Triangular simple, más blanda que la cuadrada |
 | **Acid House 303** | MonoSynth | Saw con filtro lowpass muy resonante, decay corto y portamento para líneas líquidas |
 | **Detroit Techno Bass** | MonoSynth | Pulso analógico seco, repetitivo, con filtro rápido y bajo presente |
 | **Electro 808 Funk** | FMSynth | Ataque inmediato, cuadrada/FM y cola corta para frases sintéticas tipo electro |
@@ -189,6 +192,8 @@ modulationEnvelope:
 | **FM Glass Bell** | FMSynth | Campana digital con ataque suavizado y cola usable |
 | **Deep Organ Drift** | AMSynth | Entrada lenta/intermedia, cuerpo estable y cola larga para colchones armónicos |
 | **French House Pluck** | MonoSynth | Pluck filtrado, rápido y resonante sin atarlo a un artista específico |
+
+El preset inicial de cada portal nuevo es **Robot Pop Minimal**.
 
 Los presets priorizan rasgos de producción de estilos influyentes de la electrónica: 303 acid con filtro resonante, techno de Detroit con bajo mecánico, electro con timbre cuadrado/FM, dub techno con stabs filtrados y ambientes de tape-loop con ataques lentos.
 
