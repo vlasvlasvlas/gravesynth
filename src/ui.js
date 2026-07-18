@@ -168,6 +168,11 @@ export function initUI() {
     document.getElementById('modal-help').classList.remove('hidden'));
   document.getElementById('btn-close-modal').addEventListener('click', () =>
     document.getElementById('modal-help').classList.add('hidden'));
+  document.getElementById('btn-close-yaml-modal')?.addEventListener('click', () =>
+    document.getElementById('modal-yaml-help').classList.add('hidden'));
+  document.getElementById('modal-yaml-help')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-yaml-help') e.currentTarget.classList.add('hidden');
+  });
 
   // Panic button
   document.getElementById('btn-panic')?.addEventListener('click', () => {
@@ -312,7 +317,10 @@ function renderPortalForm(container, data) {
       </select>
     </div>
     <div class="form-group">
-      <label>YAML Síntesis</label>
+      <div class="label-with-action">
+        <label for="prop-yaml">YAML Síntesis</label>
+        <button type="button" id="btn-yaml-help" class="help-icon-btn" title="Ayuda para editar YAML" aria-label="Ayuda para editar YAML">?</button>
+      </div>
       <textarea id="prop-yaml" class="yaml-editor">${d.yamlConfig}</textarea>
       <small id="yaml-error" style="color:red; display:none; margin-top:4px;"></small>
     </div>`;
@@ -365,6 +373,9 @@ function renderPortalForm(container, data) {
 
   const yamlInput = document.getElementById('prop-yaml');
   const yamlError = document.getElementById('yaml-error');
+  document.getElementById('btn-yaml-help')?.addEventListener('click', () => {
+    document.getElementById('modal-yaml-help').classList.remove('hidden');
+  });
   yamlInput.addEventListener('input', (e) => {
     try {
       const parsed = yaml.load(e.target.value);

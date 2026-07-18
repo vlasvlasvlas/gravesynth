@@ -194,6 +194,39 @@ body[data-tool="eraser"]      #canvas-container { cursor: url("data:image/svg+xm
   opacity: 0.6;
 }
 
+.label-with-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.label-with-action label {
+  margin-bottom: 0;
+}
+
+.help-icon-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.help-icon-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
 .form-group select,
 .form-group input[type="text"],
 .form-group input[type="number"] {
@@ -351,8 +384,62 @@ kbd {
   transition: opacity 0.15s;
 }
 
-#btn-close-modal:hover {
+#btn-close-modal:hover,
+.modal-action-btn:hover {
   opacity: 0.8;
+}
+
+.modal-action-btn {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-family: 'Inter', sans-serif;
+  transition: opacity 0.15s;
+}
+
+.yaml-help-content {
+  max-width: 460px;
+  text-align: left;
+}
+
+.yaml-help-content h2 {
+  text-align: left;
+}
+
+.yaml-help-list {
+  margin: 0 0 14px 18px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  opacity: 0.86;
+}
+
+.yaml-help-list li {
+  margin-bottom: 6px;
+}
+
+.yaml-help-content code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.78rem;
+}
+
+.yaml-help-code {
+  background: var(--code-bg);
+  color: var(--code-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 10px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.yaml-help-note {
+  font-size: 0.82rem;
 }
 
 /* ── Toggle row (line style) ─────────────────────────── */

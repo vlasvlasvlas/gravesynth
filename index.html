@@ -111,6 +111,29 @@
       </div>
     </div>
 
+    <div id="modal-yaml-help" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="yaml-help-title">
+      <div class="modal-content yaml-help-content">
+        <h2 id="yaml-help-title">YAML de síntesis</h2>
+        <p>El YAML define el sintetizador de ese portal. Al editarlo, el sonido cambia en vivo si el texto es válido.</p>
+        <ul class="yaml-help-list">
+          <li><strong>type</strong> elige el motor: <code>MonoSynth</code>, <code>FMSynth</code> o <code>AMSynth</code>.</li>
+          <li><strong>oscillator.type</strong> cambia la onda: <code>sine</code>, <code>square</code>, <code>triangle</code> o <code>sawtooth</code>.</li>
+          <li><strong>envelope</strong> controla ataque, caída, sustain y release.</li>
+          <li><strong>filter</strong>, <strong>harmonicity</strong> y <strong>modulationIndex</strong> cambian color, brillo y carácter.</li>
+        </ul>
+        <pre class="yaml-help-code"><code>type: "MonoSynth"
+oscillator:
+  type: "sawtooth"
+envelope:
+  attack: 0.01
+  decay: 0.2
+  sustain: 0.5
+  release: 1.2</code></pre>
+        <p class="yaml-help-note">Usa dos espacios para indentar. Si aparece error, corrige el YAML y el sonido anterior queda activo.</p>
+        <button id="btn-close-yaml-modal" class="modal-action-btn">Cerrar</button>
+      </div>
+    </div>
+
     <div id="canvas-container"></div>
 
     <script type="module" src="/src/main.js"></script>
