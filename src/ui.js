@@ -439,6 +439,7 @@ export function openSidebar() {
   if (!selected) {
     sidebarTitle.innerText = 'Configuración Global';
     const masterVol = STATE.masterVolume ?? -6;
+    const maxBalls = STATE.maxBalls ?? 120;
     sidebarContent.innerHTML = `
       <div class="form-group">
         <label>Tempo (BPM)</label>
@@ -452,6 +453,13 @@ export function openSidebar() {
         <div class="bpm-row">
           <input type="range" id="global-volume" value="${masterVol}" min="-40" max="0" step="0.5" />
           <span id="vol-display">${formatMasterVolume(masterVol)}</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Máx. pelotas</label>
+        <div class="bpm-row">
+          <input type="range" id="global-max-balls" value="${maxBalls}" min="30" max="300" step="10" />
+          <span id="max-balls-display">${maxBalls}</span>
         </div>
       </div>
       <div class="form-group" style="margin-top:20px; opacity:0.6; font-size:0.8rem;">
@@ -471,6 +479,13 @@ export function openSidebar() {
       volDisplay.textContent = formatMasterVolume(db);
       STATE.masterVolume = db;
       if (window.notifyMasterVolumeUpdate) window.notifyMasterVolumeUpdate(db);
+    });
+    const maxBallsInput = document.getElementById('global-max-balls');
+    const maxBallsDisplay = document.getElementById('max-balls-display');
+    maxBallsInput.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      STATE.maxBalls = value;
+      maxBallsDisplay.textContent = value;
     });
     return;
   }

@@ -14,8 +14,7 @@ const MOVING_PLATFORM_THICKNESS = 14;
 const DEFAULT_PLATFORM_SPEED = 90;
 const DEFAULT_PLATFORM_LENGTH = 120;
 const LINE_RESTITUTION = 0.8;
-const MAX_BALLS = 120; // global cap — prevents browser overload
-const SOFT_BALL_LIMIT = 110;
+const DEFAULT_MAX_BALLS = 120;
 const BALL_TTL_MS = 45000;
 const BALL_FADE_MS = 450;
 
@@ -123,7 +122,7 @@ export function clearAllBalls() {
 export function spawnBall(portal) {
   if (STATE.isPaused) return;
   pruneOverflowBalls(Matter.Composite.allBodies(world), performance.now(), true);
-  if (getBallCount() >= MAX_BALLS) return; // density cap
+  if (getBallCount() >= getMaxBalls()) return; // density cap
 
   const scale    = STATE.SCALES[portal.scale] || STATE.SCALES.major;
   const scaleLen = scale.length;
@@ -181,7 +180,7 @@ function pruneAgedBalls(bodies, now) {
 
 function pruneOverflowBalls(bodies, now, force = false) {
   const balls = getLiveBalls(bodies);
-  const limit = force ? SOFT_BALL_LIMIT : MAX_BALLS;
+  const limit = force ? getSoftBallLimit() : getMaxBalls();
   const overflow = balls.length - limit;
   if (overflow <= 0) return;
 
@@ -198,6 +197,16 @@ function ballCleanupScore(body, now) {
   const lowMotionBonus = Math.max(0, 4 - speed) * 5000;
   const lowScreenBonus = body.position.y > window.innerHeight - 80 ? 30000 : 0;
   return age + sleepBonus + lowMotionBonus + lowScreenBonus;
+}
+
+function getMaxBalls() {
+  const configured = Number(STATE.maxBalls ?? DEFAULT_MAX_BALLS);
+  if (!Number.isFinite(configured)) return DEFAULT_MAX_BALLS;
+  return Math.max(30, Math.min(300, Math.round(configured)));
+}
+
+function getSoftBallLimit() {
+  return Math.max(20, Math.floor(getMaxBalls() * 0.9));
 }
 
 // opts: { style, gapRatio, fx, fxAmount, fxVolume, platformSpeed, platformLength }

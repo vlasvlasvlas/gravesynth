@@ -4,6 +4,7 @@ export const STATE = {
   selectedObjectId: null,
   bpm: 120,
   masterVolume: -6,
+  maxBalls: 120,
   isPaused: false,
 
   portals: [],  // { id, x, y, note, scale, mode, rpm, size, synthPreset, yamlConfig, parsedSynthDef, _arpIndex }

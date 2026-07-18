@@ -74,6 +74,7 @@ Haz click en el ícono ⚙️ sin ningún objeto seleccionado:
 
 - **Tempo (BPM):** sincroniza la emisión de todos los portales al Transport de Tone.js
 - **Volumen Master:** controla `Tone.Destination.volume` (−40 a 0 dB); el extremo izquierdo es mute real
+- **Máx. pelotas:** ajusta la densidad máxima de la escena; la limpieza automática usa este valor como límite dinámico
 
 ---
 
