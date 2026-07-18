@@ -440,7 +440,6 @@ function renderLineForm(container, data) {
     gapRatio: 0.4,
     fx: 'none',
     fxAmount: 0.5,
-    restitution: 0.7,
     platformSpeed: 90,
     platformLength: Math.max(minPlatformLength, Math.min(120, maxPlatformLength)),
     ...data
@@ -506,13 +505,7 @@ function renderLineForm(container, data) {
         <span id="fxamount-display">${Math.round(d.fxAmount * 100)}%</span>
       </div>
     </div>
-    <div class="form-group">
-      <label>Rebote</label>
-      <div class="bpm-row">
-        <input type="range" id="prop-restitution" value="${d.restitution}" min="0.1" max="1.0" step="0.05" />
-        <span id="restitution-display">${Math.round(d.restitution * 100)}%</span>
-      </div>
-    </div>`;
+    `;
 
   // Style toggle — also rebuilds physics bodies so gaps are real
   container.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -571,12 +564,6 @@ function renderLineForm(container, data) {
     updateObjectData(data.id, { fxAmount: val });
   });
 
-  document.getElementById('prop-restitution').addEventListener('input', (e) => {
-    const val = parseFloat(e.target.value);
-    document.getElementById('restitution-display').textContent = Math.round(val * 100) + '%';
-    updateObjectData(data.id, { restitution: val });
-    if (window.notifyLineRebuild) window.notifyLineRebuild(data.id);
-  });
 }
 
 export function createPortal(x, y) {

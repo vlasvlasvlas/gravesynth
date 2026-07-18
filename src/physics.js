@@ -13,6 +13,7 @@ const DASH_THICKNESS = 10;
 const MOVING_PLATFORM_THICKNESS = 14;
 const DEFAULT_PLATFORM_SPEED = 90;
 const DEFAULT_PLATFORM_LENGTH = 120;
+const LINE_RESTITUTION = 0.8;
 
 export function updateWalls() {
   const W = window.innerWidth, H = window.innerHeight;
@@ -149,7 +150,7 @@ export function spawnBall(portal) {
   Matter.World.add(world, ball);
 }
 
-// opts: { style, gapRatio, fx, fxAmount, restitution, platformSpeed, platformLength }
+// opts: { style, gapRatio, fx, fxAmount, platformSpeed, platformLength }
 // Dashed lines create multiple physics bodies — real gaps balls can pass through.
 export function drawLine(x1, y1, x2, y2, opts = {}) {
   const dx  = x2 - x1, dy = y2 - y1;
@@ -158,7 +159,6 @@ export function drawLine(x1, y1, x2, y2, opts = {}) {
 
   const style       = opts.style       ?? 'solid';
   const gapRatio    = opts.gapRatio    ?? 0.4;
-  const restitution = opts.restitution ?? 0.7;
   const lineId      = 'line_' + Date.now();
 
   const lineData = {
@@ -168,7 +168,6 @@ export function drawLine(x1, y1, x2, y2, opts = {}) {
     style, gapRatio,
     fx:       opts.fx       ?? 'none',
     fxAmount: opts.fxAmount ?? 0.5,
-    restitution,
     platformSpeed:  opts.platformSpeed  ?? DEFAULT_PLATFORM_SPEED,
     platformLength: opts.platformLength ?? Math.min(DEFAULT_PLATFORM_LENGTH, len),
     platformOffset: opts.platformOffset ?? 0,
@@ -184,7 +183,7 @@ export function getLineByBodyId(bodyId) {
   return STATE.lines.find(l => l.bodyIds.includes(bodyId));
 }
 
-// Rebuild physics bodies for a line after style/gapRatio/restitution changes
+// Rebuild physics bodies for a line after style/gapRatio/platform changes
 export function rebuildLine(lineId) {
   const ld = STATE.lines.find(l => l.id === lineId);
   if (!ld) return;
@@ -228,8 +227,7 @@ function getPlatformLength(lineData, lineLength) {
 function createLineBodies(lineData) {
   const { x1, y1, dx, dy, len, angle, nx, ny } = getLineMetrics(lineData);
   const style = lineData.style ?? 'solid';
-  const restitution = lineData.restitution ?? 0.7;
-  const bodyOpts = { isStatic: true, angle, label: 'line', friction: 0, restitution };
+  const bodyOpts = { isStatic: true, angle, label: 'line', friction: 0, restitution: LINE_RESTITUTION };
   const bodyIds = [];
 
   if (style === 'dashed') {
