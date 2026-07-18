@@ -13,6 +13,7 @@ let FX_REVERB_SYNTH = null;
 let FX_ECHO_NODE    = null;
 let FX_ECHO_SYNTH   = null;
 let FX_PORTA_SYNTH  = null;
+let FX_PITCH_SYNTH  = null;
 
 // Minimum safe offset for reactive scheduling (bypasses Tone.now() lookAhead wrapper).
 // Tone.now() = audioCtx.currentTime + lookAhead — we DON'T want that for collisions.
@@ -69,6 +70,12 @@ export async function initAudio() {
     filter: { frequency: 2800, type: 'lowpass' },
     envelope: { attack: 0.008, decay: 0.6, sustain: 0.12, release: 0.8 },
     volume: -9
+  }).toDestination();
+
+  FX_PITCH_SYNTH = new Tone.PolySynth(Tone.MonoSynth, {
+    oscillator: { type: 'triangle' },
+    envelope: { attack: 0.004, decay: 0.18, sustain: 0.05, release: 0.45 },
+    volume: -10
   }).toDestination();
 
   // lookAhead controls the Transport scheduler (ball-spawning loops).
@@ -169,6 +176,8 @@ export function handleImpact(bodyA, bodyB, velocity) {
   const lineData = STATE.lines.find(l => l.bodyIds && l.bodyIds.includes(target.id));
   const fx       = lineData?.fx       ?? 'none';
   const fxAmount = lineData?.fxAmount ?? 0.5;
+  const fxVolume = lineData?.fxVolume ?? 1;
+  const fxVolumeDb = gainToDb(fxVolume);
 
   // Pitch shift via octave offset
   let noteOctave = finalOctave;
@@ -178,9 +187,16 @@ export function handleImpact(bodyA, bodyB, velocity) {
 
   const t = Tone.getContext().rawContext.currentTime + REACTIVE_OFFSET;
 
+  if ((fx === 'pitch-up' || fx === 'pitch-down') && FX_PITCH_SYNTH) {
+    FX_PITCH_SYNTH.volume.value = -10 + fxVolumeDb;
+    FX_PITCH_SYNTH.triggerAttackRelease(finalFreq, '8n', t, vol * 0.9);
+    ctx.synth.triggerAttackRelease(freq, '16n', t, vol * 0.35);
+    return;
+  }
+
   // Reverb FX — dedicated bus with long tail, no global wet pollution
   if (fx === 'reverb' && FX_REVERB_SYNTH) {
-    FX_REVERB_SYNTH.volume.value = -22 + fxAmount * 14; // -22 → -8 dB
+    FX_REVERB_SYNTH.volume.value = -22 + fxAmount * 14 + fxVolumeDb; // base -22 → -8 dB
     FX_REVERB_SYNTH.triggerAttackRelease(finalFreq, '4n', t, vol * 0.75);
     ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol * 0.8);
     return;
@@ -188,6 +204,7 @@ export function handleImpact(bodyA, bodyB, velocity) {
 
   // Echo FX — real FeedbackDelay, amount controls time and feedback
   if (fx === 'echo' && FX_ECHO_SYNTH) {
+    FX_ECHO_SYNTH.volume.value = -12 + fxVolumeDb;
     FX_ECHO_NODE.delayTime.rampTo(0.08 + fxAmount * 0.42, 0.01);
     FX_ECHO_NODE.feedback.rampTo(0.12 + fxAmount * 0.38, 0.01);
     FX_ECHO_SYNTH.triggerAttackRelease(finalFreq, '16n', t, vol * 0.65);
@@ -197,6 +214,7 @@ export function handleImpact(bodyA, bodyB, velocity) {
 
   // Portamento FX — continuous frequency ramp via MonoSynth (no staircase)
   if (fx.startsWith('portamento') && FX_PORTA_SYNTH) {
+    FX_PORTA_SYNTH.volume.value = -9 + fxVolumeDb;
     const dir = fx === 'portamento-random' ? (Math.random() > 0.5 ? 1 : -1)
               : fx === 'portamento-up' ? 1 : -1;
     const semiRange = 3 + Math.round(fxAmount * 9);     // 3–12 semitones
@@ -210,6 +228,12 @@ export function handleImpact(bodyA, bodyB, velocity) {
   }
 
   ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol);
+}
+
+function gainToDb(value) {
+  const gain = Math.max(0, Math.min(Number(value) || 0, 4));
+  if (gain <= 0) return -80;
+  return 20 * Math.log10(gain);
 }
 
 export function handleAbsorptionFade(body) {

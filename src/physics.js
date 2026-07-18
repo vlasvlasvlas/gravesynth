@@ -150,7 +150,7 @@ export function spawnBall(portal) {
   Matter.World.add(world, ball);
 }
 
-// opts: { style, gapRatio, fx, fxAmount, platformSpeed, platformLength }
+// opts: { style, gapRatio, fx, fxAmount, fxVolume, platformSpeed, platformLength }
 // Dashed lines create multiple physics bodies — real gaps balls can pass through.
 export function drawLine(x1, y1, x2, y2, opts = {}) {
   const dx  = x2 - x1, dy = y2 - y1;
@@ -168,6 +168,7 @@ export function drawLine(x1, y1, x2, y2, opts = {}) {
     style, gapRatio,
     fx:       opts.fx       ?? 'none',
     fxAmount: opts.fxAmount ?? 0.5,
+    fxVolume: opts.fxVolume ?? 1,
     platformSpeed:  opts.platformSpeed  ?? DEFAULT_PLATFORM_SPEED,
     platformLength: opts.platformLength ?? Math.min(DEFAULT_PLATFORM_LENGTH, len),
     platformOffset: opts.platformOffset ?? 0,

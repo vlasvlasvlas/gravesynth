@@ -6,7 +6,7 @@ export const STATE = {
 
   portals: [],  // { id, x, y, note, scale, mode, rpm, size, synthPreset, yamlConfig, parsedSynthDef, _arpIndex }
   vacuums: [],  // { id, x, y, power, radius }
-  lines: [],    // { id, bodyIds[], startX, startY, endX, endY, style, gapRatio, platformSpeed, platformLength, fx, fxAmount }
+  lines: [],    // { id, bodyIds[], startX, startY, endX, endY, style, gapRatio, platformSpeed, platformLength, fx, fxAmount, fxVolume }
 
   SCALES: {
     major:      [0, 2, 4, 5, 7, 9, 11],

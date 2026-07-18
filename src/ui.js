@@ -440,6 +440,7 @@ function renderLineForm(container, data) {
     gapRatio: 0.4,
     fx: 'none',
     fxAmount: 0.5,
+    fxVolume: 1,
     platformSpeed: 90,
     platformLength: Math.max(minPlatformLength, Math.min(120, maxPlatformLength)),
     ...data
@@ -459,6 +460,7 @@ function renderLineForm(container, data) {
 
   const amountLabel   = FX_AMOUNT_LABELS[d.fx] ?? null;
   const showAmount    = amountLabel !== null;
+  const showFxVolume  = d.fx !== 'none';
 
   container.innerHTML = `
     <div class="form-group">
@@ -503,6 +505,13 @@ function renderLineForm(container, data) {
       <div class="bpm-row">
         <input type="range" id="prop-fxamount" value="${d.fxAmount}" min="0" max="1" step="0.05" />
         <span id="fxamount-display">${Math.round(d.fxAmount * 100)}%</span>
+      </div>
+    </div>
+    <div class="form-group" id="fxvolume-group" style="${showFxVolume ? '' : 'display:none'}">
+      <label>Volumen de efecto</label>
+      <div class="bpm-row">
+        <input type="range" id="prop-fxvolume" value="${d.fxVolume}" min="0" max="4" step="0.05" />
+        <span id="fxvolume-display">${Math.round(d.fxVolume * 100)}%</span>
       </div>
     </div>
     `;
@@ -550,18 +559,26 @@ function renderLineForm(container, data) {
     updateObjectData(data.id, { fx });
     const label = FX_AMOUNT_LABELS[fx] ?? null;
     const grp   = document.getElementById('fxamount-group');
+    const volumeGrp = document.getElementById('fxvolume-group');
     if (label) {
       document.getElementById('fxamount-label').textContent = label;
       grp.style.display = '';
     } else {
       grp.style.display = 'none';
     }
+    volumeGrp.style.display = fx === 'none' ? 'none' : '';
   });
 
   document.getElementById('prop-fxamount').addEventListener('input', (e) => {
     const val = parseFloat(e.target.value);
     document.getElementById('fxamount-display').textContent = Math.round(val * 100) + '%';
     updateObjectData(data.id, { fxAmount: val });
+  });
+
+  document.getElementById('prop-fxvolume').addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    document.getElementById('fxvolume-display').textContent = Math.round(val * 100) + '%';
+    updateObjectData(data.id, { fxVolume: val });
   });
 
 }
