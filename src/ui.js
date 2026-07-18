@@ -396,7 +396,7 @@ function renderVacuumForm(container, data) {
     <div class="form-group">
       <label>Fuerza de Succión</label>
       <div class="bpm-row">
-        <input type="range" id="prop-power" value="${d.power}" min="1" max="100" />
+        <input type="range" id="prop-power" value="${d.power}" min="1" max="200" />
         <span id="power-display">${d.power}</span>
       </div>
     </div>
