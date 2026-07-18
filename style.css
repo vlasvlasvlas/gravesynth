@@ -185,6 +185,19 @@ body[data-tool="eraser"]      #canvas-container { cursor: url("data:image/svg+xm
   flex-grow: 1;
 }
 
+.global-controls-panel {
+  border-bottom: 1px solid var(--border-color);
+  margin: -2px 0 16px;
+  padding-bottom: 12px;
+}
+
+.empty-object-note {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  opacity: 0.6;
+}
+
 /* ── Forms ───────────────────────────────────────────── */
 .form-group {
   margin-bottom: 14px;

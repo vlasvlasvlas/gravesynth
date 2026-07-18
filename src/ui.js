@@ -436,74 +436,90 @@ export function openSidebar() {
   sidebar.classList.remove('hidden');
 
   const selected = getSelectedObject();
+  const objectContent = document.createElement('div');
+  sidebarContent.innerHTML = '';
+  sidebarContent.appendChild(renderGlobalControls());
+  sidebarContent.appendChild(objectContent);
+
   if (!selected) {
     sidebarTitle.innerText = 'Configuración Global';
-    const masterVol = STATE.masterVolume ?? -6;
-    const maxBalls = STATE.maxBalls ?? 120;
-    sidebarContent.innerHTML = `
-      <div class="form-group">
-        <label>Tempo (BPM)</label>
-        <div class="bpm-row">
-          <input type="range" id="global-bpm" value="${STATE.bpm}" min="40" max="240" />
-          <span id="bpm-display">${STATE.bpm}</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Volumen Master</label>
-        <div class="bpm-row">
-          <input type="range" id="global-volume" value="${masterVol}" min="-40" max="0" step="0.5" />
-          <span id="vol-display">${formatMasterVolume(masterVol)}</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Máx. pelotas</label>
-        <div class="bpm-row">
-          <input type="range" id="global-max-balls" value="${maxBalls}" min="30" max="300" step="10" />
-          <span id="max-balls-display">${maxBalls}</span>
-        </div>
-      </div>
-      <div class="form-group" style="margin-top:20px; opacity:0.6; font-size:0.8rem;">
-        Selecciona un Portal o Aspiradora en el canvas para editar sus propiedades.
+    objectContent.innerHTML = `
+      <div class="empty-object-note">
+        Selecciona un Portal, Línea o Aspiradora para editar sus propiedades.
       </div>`;
-    const bpmInput   = document.getElementById('global-bpm');
-    const bpmDisplay = document.getElementById('bpm-display');
-    bpmInput.addEventListener('input', (e) => {
-      const bpm = parseInt(e.target.value);
-      bpmDisplay.textContent = bpm;
-      if (window.notifyBpmUpdate) window.notifyBpmUpdate(bpm);
-    });
-    const volInput   = document.getElementById('global-volume');
-    const volDisplay = document.getElementById('vol-display');
-    volInput.addEventListener('input', (e) => {
-      const db = parseFloat(e.target.value);
-      volDisplay.textContent = formatMasterVolume(db);
-      STATE.masterVolume = db;
-      if (window.notifyMasterVolumeUpdate) window.notifyMasterVolumeUpdate(db);
-    });
-    const maxBallsInput = document.getElementById('global-max-balls');
-    const maxBallsDisplay = document.getElementById('max-balls-display');
-    maxBallsInput.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      STATE.maxBalls = value;
-      maxBallsDisplay.textContent = value;
-    });
     return;
   }
 
   if (selected.type === 'portal') {
     sidebarTitle.innerText = 'Portal';
-    renderPortalForm(sidebarContent, selected.data);
+    renderPortalForm(objectContent, selected.data);
   } else if (selected.type === 'vacuum') {
     sidebarTitle.innerText = 'Aspiradora';
-    renderVacuumForm(sidebarContent, selected.data);
+    renderVacuumForm(objectContent, selected.data);
   } else if (selected.type === 'line') {
     sidebarTitle.innerText = 'Línea';
-    renderLineForm(sidebarContent, selected.data);
+    renderLineForm(objectContent, selected.data);
   }
 }
 
 export function closeSidebar() {
   document.getElementById('sidebar').classList.add('hidden');
+}
+
+function renderGlobalControls() {
+  const wrapper = document.createElement('section');
+  wrapper.className = 'global-controls-panel';
+  const masterVol = STATE.masterVolume ?? -6;
+  const maxBalls = STATE.maxBalls ?? 120;
+  wrapper.innerHTML = `
+    <div class="form-group">
+      <label>Tempo (BPM)</label>
+      <div class="bpm-row">
+        <input type="range" id="global-bpm" value="${STATE.bpm}" min="40" max="240" />
+        <span id="bpm-display">${STATE.bpm}</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Volumen Master</label>
+      <div class="bpm-row">
+        <input type="range" id="global-volume" value="${masterVol}" min="-40" max="0" step="0.5" />
+        <span id="vol-display">${formatMasterVolume(masterVol)}</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Máx. pelotas</label>
+      <div class="bpm-row">
+        <input type="range" id="global-max-balls" value="${maxBalls}" min="30" max="300" step="10" />
+        <span id="max-balls-display">${maxBalls}</span>
+      </div>
+    </div>`;
+
+  const bpmInput = wrapper.querySelector('#global-bpm');
+  const bpmDisplay = wrapper.querySelector('#bpm-display');
+  bpmInput.addEventListener('input', (e) => {
+    const bpm = parseInt(e.target.value);
+    bpmDisplay.textContent = bpm;
+    if (window.notifyBpmUpdate) window.notifyBpmUpdate(bpm);
+  });
+
+  const volInput = wrapper.querySelector('#global-volume');
+  const volDisplay = wrapper.querySelector('#vol-display');
+  volInput.addEventListener('input', (e) => {
+    const db = parseFloat(e.target.value);
+    volDisplay.textContent = formatMasterVolume(db);
+    STATE.masterVolume = db;
+    if (window.notifyMasterVolumeUpdate) window.notifyMasterVolumeUpdate(db);
+  });
+
+  const maxBallsInput = wrapper.querySelector('#global-max-balls');
+  const maxBallsDisplay = wrapper.querySelector('#max-balls-display');
+  maxBallsInput.addEventListener('input', (e) => {
+    const value = parseInt(e.target.value);
+    STATE.maxBalls = value;
+    maxBallsDisplay.textContent = value;
+  });
+
+  return wrapper;
 }
 
 function renderPortalForm(container, data) {

@@ -68,9 +68,9 @@ Coloca un portal (`P`), luego haz click sobre él con la herramienta de selecci�
 | Preset | Selecciona un parche de síntesis predefinido |
 | YAML | Editor directo del parche (ver sección abajo) |
 
-### Configuración Global
+### Configuración global fija
 
-Haz click en el ícono ⚙️ sin ningún objeto seleccionado:
+Abre el panel lateral con el ícono ⚙️ o seleccionando un objeto. Estos controles aparecen siempre arriba:
 
 - **Tempo (BPM):** sincroniza la emisión de todos los portales al Transport de Tone.js
 - **Volumen Master:** controla `Tone.Destination.volume` (−40 a 0 dB); el extremo izquierdo es mute real
