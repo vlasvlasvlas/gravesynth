@@ -53,15 +53,12 @@ export function initVisuals() {
           }
 
           p.push();
-          p.fill(hue, sat, light);
+          const deathProgress = body.isDying ? getDeathProgress(body) : 0;
+          const alpha = body.isDying ? 1 - deathProgress : 1;
+          const scale = body.isDying ? 1 - deathProgress * 0.85 : 1;
+          p.fill(hue, sat, light, alpha);
           p.noStroke();
-          if (body.isDying) {
-            p.translate(body.position.x, body.position.y);
-            p.scale(0.5);
-            p.circle(0, 0, r * 2);
-          } else {
-            p.circle(body.position.x, body.position.y, r * 2);
-          }
+          p.circle(body.position.x, body.position.y, r * 2 * scale);
           p.pop();
         }
       });
@@ -293,6 +290,13 @@ function distToSegment(px, py, x1, y1, x2, y2) {
   if (lenSq === 0) return Math.dist(px, py, x1, y1);
   const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
   return Math.dist(px, py, x1 + t * dx, y1 + t * dy);
+}
+
+function getDeathProgress(body) {
+  const now = performance.now();
+  const start = body.deathStart ?? now;
+  const end = body.deathTime ?? now;
+  return Math.max(0, Math.min(1, (now - start) / Math.max(1, end - start)));
 }
 
 function checkSelection(x, y) {

@@ -51,6 +51,7 @@ npm run preview  # preview del build
 4. Las notas pertenecen a la **escala** y **tono raíz** configurados en el portal (mayor, menor, pentatónica, dórica).
 5. El modo **Arpegio ↑/↓** sube o baja por la escala con cada pelota emitida. **Random** elige dentro de la escala al azar.
 6. Las **Aspiradoras** atraen pelotas dentro de su radio y las eliminan con fade out para liberar memoria y controlar la densidad sonora.
+7. Las pelotas tienen vida máxima y limpieza automática: si se acumulan demasiadas, el sistema borra de a poco las más viejas o inactivas para que los portales sigan emitiendo.
 
 ### Configuración de un Portal
 

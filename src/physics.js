@@ -14,6 +14,10 @@ const MOVING_PLATFORM_THICKNESS = 14;
 const DEFAULT_PLATFORM_SPEED = 90;
 const DEFAULT_PLATFORM_LENGTH = 120;
 const LINE_RESTITUTION = 0.8;
+const MAX_BALLS = 120; // global cap — prevents browser overload
+const SOFT_BALL_LIMIT = 110;
+const BALL_TTL_MS = 45000;
+const BALL_FADE_MS = 450;
 
 export function updateWalls() {
   const W = window.innerWidth, H = window.innerHeight;
@@ -62,6 +66,9 @@ export function initPhysics() {
     _lastMovingUpdate = now;
     updateMovingLines(dt);
 
+    pruneAgedBalls(bodies, now);
+    pruneOverflowBalls(bodies, now);
+
     // Glow decay + deferred body removal (safe — collected first, removed after loop)
     const toRemove = [];
     bodies.forEach(b => {
@@ -90,8 +97,7 @@ export function initPhysics() {
             y: (dy / safeDist) * mag
           });
           if (dist < ballRadius + 20 && !body.isDying) {
-            body.isDying  = true;
-            body.deathTime = now + 200;
+            markBallDying(body, now, 200);
             physicsEvents.dispatchEvent(new CustomEvent('absorbed', { detail: { body } }));
           }
         }
@@ -105,8 +111,6 @@ export function updatePhysics() {
   Matter.Engine.update(engine, 1000 / 60);
 }
 
-const MAX_BALLS = 120; // global cap — prevents browser overload
-
 export function getBallCount() {
   return Matter.Composite.allBodies(world).filter(b => b.label === 'ball').length;
 }
@@ -118,6 +122,7 @@ export function clearAllBalls() {
 
 export function spawnBall(portal) {
   if (STATE.isPaused) return;
+  pruneOverflowBalls(Matter.Composite.allBodies(world), performance.now(), true);
   if (getBallCount() >= MAX_BALLS) return; // density cap
 
   const scale    = STATE.SCALES[portal.scale] || STATE.SCALES.major;
@@ -145,11 +150,54 @@ export function spawnBall(portal) {
     portalId: portal.id,
     scaleNoteIndex,
     octaveOffset: Math.floor(Math.random() * 2), // octave 3 or 4 base
+    bornAt: performance.now(),
     render: { glow: 0 }
   });
 
   Matter.Body.setVelocity(ball, { x: (Math.random() - 0.5) * 2, y: 0 });
   Matter.World.add(world, ball);
+}
+
+function markBallDying(body, now, fadeMs = BALL_FADE_MS) {
+  if (!body || body.label !== 'ball' || body.isDying) return;
+  body.isDying = true;
+  body.deathStart = now;
+  body.deathTime = now + fadeMs;
+  Matter.Body.setVelocity(body, {
+    x: body.velocity.x * 0.25,
+    y: body.velocity.y * 0.25
+  });
+}
+
+function getLiveBalls(bodies) {
+  return bodies.filter(body => body.label === 'ball' && !body.isDying);
+}
+
+function pruneAgedBalls(bodies, now) {
+  getLiveBalls(bodies).forEach(body => {
+    if (now - (body.bornAt ?? now) > BALL_TTL_MS) markBallDying(body, now);
+  });
+}
+
+function pruneOverflowBalls(bodies, now, force = false) {
+  const balls = getLiveBalls(bodies);
+  const limit = force ? SOFT_BALL_LIMIT : MAX_BALLS;
+  const overflow = balls.length - limit;
+  if (overflow <= 0) return;
+
+  balls
+    .sort((a, b) => ballCleanupScore(b, now) - ballCleanupScore(a, now))
+    .slice(0, Math.min(overflow, 3))
+    .forEach(body => markBallDying(body, now));
+}
+
+function ballCleanupScore(body, now) {
+  const age = now - (body.bornAt ?? now);
+  const speed = Math.hypot(body.velocity.x, body.velocity.y);
+  const sleepBonus = body.isSleeping ? 60000 : 0;
+  const lowMotionBonus = Math.max(0, 4 - speed) * 5000;
+  const lowScreenBonus = body.position.y > window.innerHeight - 80 ? 30000 : 0;
+  return age + sleepBonus + lowMotionBonus + lowScreenBonus;
 }
 
 // opts: { style, gapRatio, fx, fxAmount, fxVolume, platformSpeed, platformLength }
