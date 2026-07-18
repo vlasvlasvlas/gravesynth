@@ -303,7 +303,7 @@ function renderPortalForm(container, data) {
     </div>
     <div class="form-group">
       <label>Tamaño de Pelota</label>
-      <input type="range" id="prop-size" value="${d.size}" min="5" max="50" />
+      <input type="range" id="prop-size" value="${d.size}" min="5" max="100" />
     </div>
     <div class="form-group">
       <label>Preset</label>
