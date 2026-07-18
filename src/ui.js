@@ -264,6 +264,7 @@ filterEnvelope:
 };
 
 const DEFAULT_PRESET = 'robotpop';
+const MASTER_MUTE_DB = -40;
 const PRESET_OPTIONS = [
   ['basicsine', 'Basic Sine'],
   ['basicsquare', 'Basic Square'],
@@ -296,6 +297,34 @@ function normalizePresetKey(key) {
 
 function getPresetYaml(key) {
   return PRESETS[normalizePresetKey(key)];
+}
+
+function formatMasterVolume(db) {
+  return db <= MASTER_MUTE_DB ? 'Mute' : db + ' dB';
+}
+
+function renderPauseButton() {
+  const btn = document.getElementById('btn-pause');
+  if (!btn) return;
+  const paused = STATE.isPaused;
+  btn.classList.toggle('active', paused);
+  btn.setAttribute('aria-pressed', String(paused));
+  btn.setAttribute('aria-label', paused ? 'Reanudar' : 'Pausar');
+  btn.title = paused ? 'Reanudar' : 'Pausar';
+  btn.innerHTML = paused
+    ? `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M5 3.2v9.6L12.2 8 5 3.2Z"/>
+      </svg>`
+    : `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <rect x="4.2" y="3" width="2.4" height="10" rx="0.6"/>
+        <rect x="9.4" y="3" width="2.4" height="10" rx="0.6"/>
+      </svg>`;
+}
+
+function togglePaused() {
+  STATE.isPaused = !STATE.isPaused;
+  renderPauseButton();
+  if (window.notifyPauseUpdate) window.notifyPauseUpdate(STATE.isPaused);
 }
 
 export function initUI() {
@@ -367,14 +396,23 @@ export function initUI() {
   });
 
   // Panic button
+  const pauseBtn = document.getElementById('btn-pause');
+  pauseBtn?.addEventListener('click', togglePaused);
+  renderPauseButton();
+
   document.getElementById('btn-panic')?.addEventListener('click', () => {
     if (window.panicClear) window.panicClear();
   });
 
   // Keyboard shortcuts — only when not typing in inputs
   document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName)) return;
     if (e.metaKey || e.ctrlKey) return;
+    if (e.key === ' ') {
+      e.preventDefault();
+      togglePaused();
+      return;
+    }
     const map = { s: 'select', l: 'line', p: 'portal', v: 'vacuum', e: 'eraser' };
     const tool = map[e.key.toLowerCase()];
     if (!tool) return;
@@ -413,7 +451,7 @@ export function openSidebar() {
         <label>Volumen Master</label>
         <div class="bpm-row">
           <input type="range" id="global-volume" value="${masterVol}" min="-40" max="0" step="0.5" />
-          <span id="vol-display">${masterVol} dB</span>
+          <span id="vol-display">${formatMasterVolume(masterVol)}</span>
         </div>
       </div>
       <div class="form-group" style="margin-top:20px; opacity:0.6; font-size:0.8rem;">
@@ -430,7 +468,7 @@ export function openSidebar() {
     const volDisplay = document.getElementById('vol-display');
     volInput.addEventListener('input', (e) => {
       const db = parseFloat(e.target.value);
-      volDisplay.textContent = db + ' dB';
+      volDisplay.textContent = formatMasterVolume(db);
       STATE.masterVolume = db;
       if (window.notifyMasterVolumeUpdate) window.notifyMasterVolumeUpdate(db);
     });

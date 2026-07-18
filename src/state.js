@@ -3,6 +3,8 @@ export const STATE = {
   activeTool: 'select',
   selectedObjectId: null,
   bpm: 120,
+  masterVolume: -6,
+  isPaused: false,
 
   portals: [],  // { id, x, y, note, scale, mode, rpm, size, synthPreset, yamlConfig, parsedSynthDef, _arpIndex }
   vacuums: [],  // { id, x, y, power, radius }

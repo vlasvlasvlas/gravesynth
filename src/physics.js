@@ -101,6 +101,7 @@ export function initPhysics() {
 }
 
 export function updatePhysics() {
+  if (STATE.isPaused) return;
   Matter.Engine.update(engine, 1000 / 60);
 }
 
@@ -116,6 +117,7 @@ export function clearAllBalls() {
 }
 
 export function spawnBall(portal) {
+  if (STATE.isPaused) return;
   if (getBallCount() >= MAX_BALLS) return; // density cap
 
   const scale    = STATE.SCALES[portal.scale] || STATE.SCALES.major;

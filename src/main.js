@@ -1,6 +1,6 @@
 import { initUI } from './ui.js';
 import { initPhysics, physicsEvents, clearAllBalls, rebuildLine } from './physics.js';
-import { initAudio, createPortalAudio, updatePortalAudio, removePortalAudio, handleImpact, handleAbsorptionFade, updateBpm, setMasterVolume, setPortalVolume } from './audio.js';
+import { initAudio, createPortalAudio, updatePortalAudio, removePortalAudio, handleImpact, handleAbsorptionFade, updateBpm, setMasterVolume, setPortalVolume, setPaused } from './audio.js';
 import { initVisuals } from './visual.js';
 import { STATE } from './state.js';
 
@@ -44,5 +44,6 @@ window.notifyLineRebuild        = rebuildLine;
 window.notifyBpmUpdate          = updateBpm;
 window.notifyMasterVolumeUpdate = setMasterVolume;
 window.notifyVolumeUpdate       = setPortalVolume;
+window.notifyPauseUpdate        = setPaused;
 window.notifyAudioUpdate        = (portalId, config) => updatePortalAudio(portalId, config);
 window.notifyAudioRemoval       = (portalId) => removePortalAudio(portalId);

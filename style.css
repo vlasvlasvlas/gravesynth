@@ -127,6 +127,12 @@ body {
   color: var(--accent-color);
 }
 
+.icon-btn.active {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border-color: var(--text-color);
+}
+
 /* ── Cursor per tool ─────────────────────────────────── */
 body[data-tool="select"]      #canvas-container { cursor: default; }
 body[data-tool="line"]        #canvas-container { cursor: crosshair; }

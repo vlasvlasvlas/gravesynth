@@ -19,6 +19,7 @@ let FX_PITCH_SYNTH  = null;
 // Tone.now() = audioCtx.currentTime + lookAhead — we DON'T want that for collisions.
 // We use rawContext.currentTime directly + this tiny buffer to avoid "time in past" drops.
 const REACTIVE_OFFSET = 0.005; // 5ms — imperceptible, enough to clear the audio thread
+const MASTER_MUTE_DB = -40;
 
 const SYNTH_MAP = {
   MonoSynth: Tone.MonoSynth,
@@ -83,7 +84,9 @@ export async function initAudio() {
   Tone.getContext().lookAhead = 0.05;
 
   Tone.Transport.bpm.value = STATE.bpm;
-  Tone.Transport.start();
+  setMasterVolume(STATE.masterVolume);
+  if (STATE.isPaused) Tone.Transport.pause();
+  else Tone.Transport.start();
 
   STATE.portals.forEach(p => {
     if (!audioContexts.has(p.id)) createPortalAudio(p);
@@ -109,6 +112,7 @@ export function createPortalAudio(portal) {
   const interval = () => 60 / (portal.rpm || 60);
 
   const loop = new Tone.Loop(() => {
+    if (STATE.isPaused) return;
     spawnBall(portal); // direct call — no Tone.Draw, no extra rAF jitter
   }, interval()).start(0);
 
@@ -142,6 +146,8 @@ export function removePortalAudio(portalId) {
 }
 
 export function handleImpact(bodyA, bodyB, velocity) {
+  if (STATE.isPaused) return;
+
   const ball   = bodyA.label === 'ball' ? bodyA : bodyB;
   const target = bodyA.label === 'ball' ? bodyB : bodyA;
 
@@ -241,11 +247,48 @@ export function handleAbsorptionFade(body) {
 }
 
 export function setMasterVolume(db) {
-  Tone.Destination.volume.rampTo(db, 0.1);
+  STATE.masterVolume = db;
+  Tone.Destination.mute = STATE.isPaused || db <= MASTER_MUTE_DB;
+  if (db <= MASTER_MUTE_DB) {
+    Tone.Destination.volume.value = MASTER_MUTE_DB;
+  } else {
+    Tone.Destination.volume.rampTo(db, 0.1);
+  }
 }
 
 export function setPortalVolume(portalId, db) {
   const ctx = audioContexts.get(portalId);
   if (!ctx) return;
   ctx.channel.volume.rampTo(db, 0.1);
+}
+
+export function setPaused(paused) {
+  STATE.isPaused = Boolean(paused);
+
+  if (STATE.isPaused) {
+    try { Tone.Transport.pause(); } catch (_) {}
+    releaseAllAudio();
+  } else {
+    try { Tone.Transport.start(); } catch (_) {}
+  }
+
+  setMasterVolume(STATE.masterVolume);
+}
+
+function releaseAllAudio() {
+  audioContexts.forEach(({ synth }) => releaseSynth(synth));
+  [
+    FX_REVERB_SYNTH,
+    FX_ECHO_SYNTH,
+    FX_PORTA_SYNTH,
+    FX_PITCH_SYNTH,
+  ].forEach(releaseSynth);
+}
+
+function releaseSynth(synth) {
+  if (!synth) return;
+  try {
+    if (typeof synth.releaseAll === 'function') synth.releaseAll();
+    else if (typeof synth.triggerRelease === 'function') synth.triggerRelease();
+  } catch (_) {}
 }

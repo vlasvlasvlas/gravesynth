@@ -41,6 +41,7 @@ npm run preview  # preview del build
 | Línea móvil | Plataforma Móvil | `L` | Superficie corta que viaja de un extremo al otro del riel |
 | Círculos | Aspiradora | `V` | Agujero negro — absorbe pelotas para limpiar el caos |
 | Borrador | Borrador | `E` | Elimina cualquier objeto del canvas |
+| Play/Pausa | Pausa | `Space` | Congela la física, las plataformas móviles y la emisión sonora |
 
 ### El ciclo físico-musical
 
@@ -71,7 +72,7 @@ Coloca un portal (`P`), luego haz click sobre él con la herramienta de selecci�
 Haz click en el ícono ⚙️ sin ningún objeto seleccionado:
 
 - **Tempo (BPM):** sincroniza la emisión de todos los portales al Transport de Tone.js
-- **Volumen Master:** controla `Tone.Destination.volume` (−40 a 0 dB)
+- **Volumen Master:** controla `Tone.Destination.volume` (−40 a 0 dB); el extremo izquierdo es mute real
 
 ---
 
