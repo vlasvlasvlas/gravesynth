@@ -1,0 +1,391 @@
+:root {
+  --bg-color: #f5f5f5;
+  --text-color: #1a1a1a;
+  --nav-bg: #ffffff;
+  --border-color: #e0e0e0;
+  --accent-color: #0055ff;
+  --panel-bg: rgba(255, 255, 255, 0.97);
+  --input-bg: #f0f0f0;
+  --code-bg: #f0f0f0;
+  --code-color: #1a1a1a;
+}
+
+.dark-mode {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --nav-bg: #1a1a1a;
+  --border-color: #2e2e2e;
+  --accent-color: #4da6ff;
+  --panel-bg: rgba(22, 22, 22, 0.97);
+  --input-bg: #252525;
+  --code-bg: #1e1e1e;
+  --code-color: #d4d4d4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  overflow: hidden;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ── Navbar ─────────────────────────────────────────── */
+.navbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background-color: var(--nav-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 100;
+  gap: 12px;
+}
+
+.logo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.nav-center {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Tool buttons (icon) ─────────────────────────────── */
+.tool-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.tool-btn svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.tool-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.tool-btn.active {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border-color: var(--text-color);
+}
+
+/* ── Icon buttons (settings, help, theme) ────────────── */
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+/* ── Cursor per tool ─────────────────────────────────── */
+body[data-tool="select"]      #canvas-container { cursor: default; }
+body[data-tool="line"]        #canvas-container { cursor: crosshair; }
+body[data-tool="solid-line"]  #canvas-container { cursor: crosshair; }
+body[data-tool="dashed-line"] #canvas-container { cursor: crosshair; }
+body[data-tool="portal"]      #canvas-container { cursor: cell; }
+body[data-tool="vacuum"]      #canvas-container { cursor: cell; }
+body[data-tool="eraser"]      #canvas-container { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Crect x='4' y='4' width='12' height='12' rx='1' stroke='%23333' stroke-width='1.5' fill='%23fff'/%3E%3C/svg%3E") 10 10, cell; }
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.sidebar {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 300px;
+  height: calc(100vh - 50px);
+  background-color: var(--panel-bg);
+  border-left: 1px solid var(--border-color);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.sidebar.hidden {
+  transform: translateX(100%);
+}
+
+.sidebar-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sidebar-header h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.sidebar-content {
+  padding: 16px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* ── Forms ───────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0.6;
+}
+
+.form-group select,
+.form-group input[type="text"],
+.form-group input[type="number"] {
+  width: 100%;
+  padding: 7px 10px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.15s;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+/* Range + value display row */
+.bpm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bpm-row input[type="range"] {
+  flex: 1;
+  height: 4px;
+  accent-color: var(--accent-color);
+  cursor: pointer;
+}
+
+.bpm-row span {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 52px;
+  text-align: right;
+  opacity: 0.75;
+}
+
+/* YAML editor — uses CSS variables so it respects light/dark */
+textarea.yaml-editor {
+  width: 100%;
+  height: 160px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  padding: 10px;
+  background-color: var(--code-bg);
+  color: var(--code-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+
+textarea.yaml-editor:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+/* ── Modal ───────────────────────────────────────────── */
+.modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: var(--nav-bg);
+  padding: 28px 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+}
+
+.modal-content p {
+  margin-bottom: 12px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.help-shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 16px 0;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.help-shortcuts div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.8;
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 0.78rem;
+  font-family: monospace;
+  font-weight: 600;
+  min-width: 22px;
+}
+
+.github-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--accent-color);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.github-link:hover {
+  text-decoration: underline;
+}
+
+#btn-close-modal {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-family: 'Inter', sans-serif;
+  transition: opacity 0.15s;
+}
+
+#btn-close-modal:hover {
+  opacity: 0.8;
+}
+
+/* ── Toggle row (line style) ─────────────────────────── */
+.toggle-row {
+  display: flex;
+  gap: 6px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.toggle-btn.active {
+  background: var(--text-color);
+  color: var(--bg-color);
+  border-color: var(--text-color);
+}
+
+/* ── Canvas ──────────────────────────────────────────── */
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}

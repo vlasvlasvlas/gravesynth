@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraveSynth</title>
+    <link rel="stylesheet" href="./style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-left">
+        <h1 class="logo">GraveSynth</h1>
+      </div>
+
+      <div class="nav-center" id="toolbar">
+
+        <!-- Select -->
+        <button class="tool-btn active" data-tool="select" title="Seleccionar (S)" aria-label="Seleccionar">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 2L3 14L7 10.5L9.5 16L11 15.3L8.5 9.8L13 9.8L3 2Z" fill="currentColor"/>
+          </svg>
+        </button>
+
+        <!-- Line -->
+        <button class="tool-btn" data-tool="line" title="Línea (L)" aria-label="Línea">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="2" y1="14" x2="16" y2="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <!-- Portal -->
+        <button class="tool-btn" data-tool="portal" title="Crear Portal (P)">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="12" height="12" stroke="currentColor" stroke-width="1.5" rx="1"/>
+            <circle cx="9" cy="9" r="2.5" fill="currentColor"/>
+          </svg>
+        </button>
+
+        <!-- Vacuum -->
+        <button class="tool-btn" data-tool="vacuum" title="Crear Aspiradora (V)">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="9" cy="9" r="3.5" stroke="currentColor" stroke-width="1"/>
+            <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
+          </svg>
+        </button>
+
+        <!-- Eraser -->
+        <button class="tool-btn" data-tool="eraser" title="Borrador (E)">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.5 3L15 7.5L8 14.5L3.5 10L10.5 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <line x1="3" y1="15" x2="15" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+      </div>
+
+      <div class="nav-right">
+        <!-- Theme toggle injected by ui.js -->
+        <button id="btn-panic" class="icon-btn" title="Limpiar todas las bolas (Panic)" aria-label="Panic: borrar todas las bolas">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="3" x2="13" y2="13"/>
+            <line x1="13" y1="3" x2="3" y2="13"/>
+          </svg>
+        </button>
+        <button id="btn-settings" class="icon-btn" title="Configuración" aria-label="Configuración global">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="8" cy="8" r="2.5"/>
+            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l1.41-1.41M3.05 12.95l1.41-1.41"/>
+          </svg>
+        </button>
+        <button id="btn-help" class="icon-btn" title="Ayuda" aria-label="Ayuda">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="8" cy="8" r="6.5"/>
+            <path d="M6 6a2 2 0 1 1 2.5 1.9C8 8.3 8 9 8 9"/>
+            <circle cx="8" cy="11.5" r="0.75" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <aside id="sidebar" class="sidebar hidden">
+      <div class="sidebar-header">
+        <h2 id="sidebar-title">Configuración Global</h2>
+        <button id="btn-close-sidebar" class="icon-btn" title="Cerrar">
+          <svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="1" y1="1" x2="13" y2="13"/>
+            <line x1="13" y1="1" x2="1" y2="13"/>
+          </svg>
+        </button>
+      </div>
+      <div class="sidebar-content" id="sidebar-content"></div>
+    </aside>
+
+    <div id="modal-help" class="modal hidden">
+      <div class="modal-content">
+        <h2>GraveSynth</h2>
+        <p>Sintetizador modular impulsado por gravedad y colisiones físicas.</p>
+        <p>Dibuja líneas, coloca portales emisores y aspiradoras para crear arquitecturas sonoras únicas.</p>
+        <div class="help-shortcuts">
+          <div><kbd>S</kbd> Seleccionar</div>
+          <div><kbd>L</kbd> Línea sólida</div>
+          <div><kbd>D</kbd> Línea punteada</div>
+          <div><kbd>P</kbd> Portal</div>
+          <div><kbd>V</kbd> Aspiradora</div>
+          <div><kbd>E</kbd> Borrador</div>
+        </div>
+        <a href="https://github.com/vlasvlasvlas/gravesynth" target="_blank" class="github-link">Ver en GitHub</a>
+        <button id="btn-close-modal">Cerrar</button>
+      </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
