@@ -3,13 +3,13 @@ export const STATE = {
   activeTool: 'select',
   selectedObjectId: null,
   bpm: 120,
-  masterVolume: -12,
+  masterVolume: -6,
   maxBalls: 120,
   isPaused: false,
 
   portals: [],  // { id, x, y, note, scale, mode, rpm, size, synthPreset, yamlConfig, parsedSynthDef, _arpIndex }
   vacuums: [],  // { id, x, y, power, radius }
-  lines: [],    // { id, bodyIds[], startX, startY, endX, endY, style, gapRatio, platformSpeed, platformLength, fx, fxAmount }
+  lines: [],    // { id, bodyIds[], startX, startY, endX, endY, style, gapRatio, platformSpeed, platformLength, fx, fxAmount, fxVolume }
 
   SCALES: {
     major:      [0, 2, 4, 5, 7, 9, 11],
