@@ -5,7 +5,7 @@ import { spawnBall } from './physics.js';
 const audioContexts = new Map(); // portalId -> { channel, synth, loop }
 
 let MASTER_REVERB = null;
-let MASTER_DELAY  = null;
+let MASTER_LIMITER = null;
 
 // Dedicated FX buses — isolated from dry signal path
 let FX_REVERB_NODE  = null;
@@ -20,6 +20,7 @@ let FX_PITCH_SYNTH  = null;
 // We use rawContext.currentTime directly + this tiny buffer to avoid "time in past" drops.
 const REACTIVE_OFFSET = 0.005; // 5ms — imperceptible, enough to clear the audio thread
 const MASTER_MUTE_DB = -40;
+const PORTAL_OUTPUT_DB = -12;
 
 const SYNTH_MAP = {
   MonoSynth: Tone.MonoSynth,
@@ -43,26 +44,27 @@ function makeSynth(synthDef, channel) {
 export async function initAudio() {
   await Tone.start();
 
+  MASTER_LIMITER = new Tone.Limiter(-3).toDestination();
+
   // Ambient master reverb (subtle, always on)
-  MASTER_REVERB = new Tone.Reverb({ decay: 1.5, wet: 0.12 }).toDestination();
-  MASTER_DELAY  = new Tone.FeedbackDelay('8n', 0.1).connect(MASTER_REVERB);
+  MASTER_REVERB = new Tone.Reverb({ decay: 1.5, wet: 0.12 }).connect(MASTER_LIMITER);
   await MASTER_REVERB.ready;
 
   // Dedicated reverb FX bus — high quality, separate from master chain
-  FX_REVERB_NODE = new Tone.Reverb({ decay: 4, preDelay: 0.02, wet: 1 }).toDestination();
+  FX_REVERB_NODE = new Tone.Reverb({ decay: 4, preDelay: 0.02, wet: 1 }).connect(MASTER_LIMITER);
   await FX_REVERB_NODE.ready;
   FX_REVERB_SYNTH = new Tone.PolySynth(Tone.MonoSynth, {
     oscillator: { type: 'sine' },
     envelope: { attack: 0.02, decay: 0.8, sustain: 0.08, release: 2.5 },
-    volume: -16
+    volume: -22
   }).connect(FX_REVERB_NODE);
 
   // Dedicated echo FX bus — real FeedbackDelay with controlled feedback
-  FX_ECHO_NODE = new Tone.FeedbackDelay({ delayTime: 0.25, feedback: 0.35, wet: 0.85 }).toDestination();
+  FX_ECHO_NODE = new Tone.FeedbackDelay({ delayTime: 0.25, feedback: 0.35, wet: 0.85 }).connect(MASTER_LIMITER);
   FX_ECHO_SYNTH = new Tone.PolySynth(Tone.MonoSynth, {
     oscillator: { type: 'sine' },
     envelope: { attack: 0.005, decay: 0.25, sustain: 0.04, release: 0.6 },
-    volume: -12
+    volume: -18
   }).connect(FX_ECHO_NODE);
 
   // Dedicated MonoSynth for portamento — frequency.rampTo gives true continuous slide
@@ -70,14 +72,14 @@ export async function initAudio() {
     oscillator: { type: 'triangle' },
     filter: { frequency: 2800, type: 'lowpass' },
     envelope: { attack: 0.008, decay: 0.6, sustain: 0.12, release: 0.8 },
-    volume: -9
-  }).toDestination();
+    volume: -18
+  }).connect(MASTER_LIMITER);
 
   FX_PITCH_SYNTH = new Tone.PolySynth(Tone.MonoSynth, {
     oscillator: { type: 'triangle' },
     envelope: { attack: 0.004, decay: 0.18, sustain: 0.05, release: 0.45 },
-    volume: -10
-  }).toDestination();
+    volume: -18
+  }).connect(MASTER_LIMITER);
 
   // lookAhead controls the Transport scheduler (ball-spawning loops).
   // Higher = more stable under CPU load. Does NOT affect collision sounds below.
@@ -101,10 +103,8 @@ export function updateBpm(bpm) {
 }
 
 export function createPortalAudio(portal) {
-  if (!MASTER_DELAY) return; // audio not yet initialized
-  // Crear canal independiente y rutear directamente al output (latencia CERO)
-  const channel = new Tone.Channel({ volume: portal.volume ?? -6, pan: 0 }).toDestination();
-  // Enviar señal al reverb en paralelo
+  if (!MASTER_LIMITER) return; // audio not yet initialized
+  const channel = new Tone.Channel({ volume: PORTAL_OUTPUT_DB, pan: 0 }).connect(MASTER_LIMITER);
   channel.connect(MASTER_REVERB);
   const synth = makeSynth(portal.parsedSynthDef, channel);
 
@@ -182,8 +182,6 @@ export function handleImpact(bodyA, bodyB, velocity) {
   const lineData = STATE.lines.find(l => l.bodyIds && l.bodyIds.includes(target.id));
   const fx       = lineData?.fx       ?? 'none';
   const fxAmount = lineData?.fxAmount ?? 0.5;
-  const fxVolume = lineData?.fxVolume ?? 1;
-  const fxVolumeDb = gainToDb(fxVolume);
 
   // Pitch shift via octave offset
   let noteOctave = finalOctave;
@@ -194,52 +192,46 @@ export function handleImpact(bodyA, bodyB, velocity) {
   const t = Tone.getContext().rawContext.currentTime + REACTIVE_OFFSET;
 
   if ((fx === 'pitch-up' || fx === 'pitch-down') && FX_PITCH_SYNTH) {
-    FX_PITCH_SYNTH.volume.value = -10 + fxVolumeDb;
-    FX_PITCH_SYNTH.triggerAttackRelease(finalFreq, '8n', t, vol * 0.9);
-    ctx.synth.triggerAttackRelease(freq, '16n', t, vol * 0.35);
+    FX_PITCH_SYNTH.volume.value = -18;
+    FX_PITCH_SYNTH.triggerAttackRelease(finalFreq, '8n', t, vol * 0.55);
+    ctx.synth.triggerAttackRelease(freq, '16n', t, vol * 0.25);
     return;
   }
 
   // Reverb FX — dedicated bus with long tail, no global wet pollution
   if (fx === 'reverb' && FX_REVERB_SYNTH) {
-    FX_REVERB_SYNTH.volume.value = -22 + fxAmount * 14 + fxVolumeDb; // base -22 → -8 dB
-    FX_REVERB_SYNTH.triggerAttackRelease(finalFreq, '4n', t, vol * 0.75);
-    ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol * 0.8);
+    FX_REVERB_SYNTH.volume.value = -28 + fxAmount * 10;
+    FX_REVERB_SYNTH.triggerAttackRelease(finalFreq, '4n', t, vol * 0.5);
+    ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol * 0.55);
     return;
   }
 
   // Echo FX — real FeedbackDelay, amount controls time and feedback
   if (fx === 'echo' && FX_ECHO_SYNTH) {
-    FX_ECHO_SYNTH.volume.value = -12 + fxVolumeDb;
+    FX_ECHO_SYNTH.volume.value = -18;
     FX_ECHO_NODE.delayTime.rampTo(0.08 + fxAmount * 0.42, 0.01);
     FX_ECHO_NODE.feedback.rampTo(0.12 + fxAmount * 0.38, 0.01);
-    FX_ECHO_SYNTH.triggerAttackRelease(finalFreq, '16n', t, vol * 0.65);
-    ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol * 0.85);
+    FX_ECHO_SYNTH.triggerAttackRelease(finalFreq, '16n', t, vol * 0.45);
+    ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol * 0.6);
     return;
   }
 
   // Portamento FX — continuous frequency ramp via MonoSynth (no staircase)
   if (fx.startsWith('portamento') && FX_PORTA_SYNTH) {
-    FX_PORTA_SYNTH.volume.value = -9 + fxVolumeDb;
+    FX_PORTA_SYNTH.volume.value = -18;
     const dir = fx === 'portamento-random' ? (Math.random() > 0.5 ? 1 : -1)
               : fx === 'portamento-up' ? 1 : -1;
     const semiRange = 3 + Math.round(fxAmount * 9);     // 3–12 semitones
     const glideTime = 0.08 + fxAmount * 0.32;           // 80–400ms
     const endHz     = Tone.Frequency(finalFreq).transpose(dir * semiRange).toFrequency();
-    FX_PORTA_SYNTH.triggerAttack(finalFreq, t, vol * 0.6);
+    FX_PORTA_SYNTH.triggerAttack(finalFreq, t, vol * 0.45);
     FX_PORTA_SYNTH.frequency.rampTo(endHz, glideTime, t + 0.006);
     FX_PORTA_SYNTH.triggerRelease(t + glideTime + 0.14);
-    ctx.synth.triggerAttackRelease(finalFreq, '16n', t, vol * 0.45);
+    ctx.synth.triggerAttackRelease(finalFreq, '16n', t, vol * 0.3);
     return;
   }
 
-  ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol);
-}
-
-function gainToDb(value) {
-  const gain = Math.max(0, Math.min(Number(value) || 0, 4));
-  if (gain <= 0) return -80;
-  return 20 * Math.log10(gain);
+  ctx.synth.triggerAttackRelease(finalFreq, '8n', t, vol * 0.7);
 }
 
 export function handleAbsorptionFade(body) {
@@ -254,12 +246,6 @@ export function setMasterVolume(db) {
   } else {
     Tone.Destination.volume.rampTo(db, 0.1);
   }
-}
-
-export function setPortalVolume(portalId, db) {
-  const ctx = audioContexts.get(portalId);
-  if (!ctx) return;
-  ctx.channel.volume.rampTo(db, 0.1);
 }
 
 export function setPaused(paused) {

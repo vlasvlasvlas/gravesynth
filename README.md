@@ -59,7 +59,6 @@ Coloca un portal (`P`), luego haz click sobre él con la herramienta de selecci�
 
 | Parámetro | Descripción |
 |-----------|-------------|
-| Volumen | dB de ese canal de audio (−40 a 0 dB) |
 | Nota Raíz | Tónica de la escala (C, C#, D...) |
 | Escala | Major, Minor, Pentatonic, Dorian |
 | Modo | Random / Arpegio ↑ / Arpegio ↓ |
@@ -73,7 +72,7 @@ Coloca un portal (`P`), luego haz click sobre él con la herramienta de selecci�
 Abre el panel lateral con el ícono ⚙️ o seleccionando un objeto. Estos controles aparecen siempre arriba:
 
 - **Tempo (BPM):** sincroniza la emisión de todos los portales al Transport de Tone.js
-- **Volumen Master:** controla `Tone.Destination.volume` (−40 a 0 dB); el extremo izquierdo es mute real
+- **Volumen Master:** único control de salida global; controla `Tone.Destination.volume` (−40 a 0 dB) y el extremo izquierdo es mute real
 - **Máx. pelotas:** ajusta la densidad máxima de la escena; la limpieza automática usa este valor como límite dinámico
 
 ---

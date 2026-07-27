@@ -469,7 +469,7 @@ export function closeSidebar() {
 function renderGlobalControls() {
   const wrapper = document.createElement('section');
   wrapper.className = 'global-controls-panel';
-  const masterVol = STATE.masterVolume ?? -6;
+  const masterVol = STATE.masterVolume ?? -12;
   const maxBalls = STATE.maxBalls ?? 120;
   wrapper.innerHTML = `
     <div class="form-group">
@@ -524,20 +524,13 @@ function renderGlobalControls() {
 
 function renderPortalForm(container, data) {
   const d = {
-    note: 'C', scale: 'pentatonic', mode: 'random', rpm: 60, size: 15, volume: -6,
+    note: 'C', scale: 'pentatonic', mode: 'random', rpm: 60, size: 15,
     synthPreset: DEFAULT_PRESET, yamlConfig: getPresetYaml(DEFAULT_PRESET),
     ...data
   };
   d.synthPreset = normalizePresetKey(d.synthPreset);
 
   container.innerHTML = `
-    <div class="form-group">
-      <label>Volumen</label>
-      <div class="bpm-row">
-        <input type="range" id="prop-volume" value="${d.volume}" min="-40" max="0" step="0.5" />
-        <span id="pvol-display">${d.volume} dB</span>
-      </div>
-    </div>
     <div class="form-group">
       <label>Nota Raíz</label>
       <select id="prop-note">${STATE.NOTES.map(n =>
@@ -604,17 +597,6 @@ function renderPortalForm(container, data) {
   listen('prop-mode',  'mode');
   listen('prop-rpm',   'rpm',  true);
   listen('prop-size',  'size', true);
-
-  const pvolInput = document.getElementById('prop-volume');
-  const pvolDisplay = document.getElementById('pvol-display');
-  if (pvolInput) {
-    pvolInput.addEventListener('input', (e) => {
-      const db = parseFloat(e.target.value);
-      pvolDisplay.textContent = db + ' dB';
-      updateObjectData(data.id, { volume: db });
-      if (window.notifyVolumeUpdate) window.notifyVolumeUpdate(data.id, db);
-    });
-  }
 
   document.getElementById('prop-preset').addEventListener('change', (e) => {
     const key = e.target.value;
@@ -700,7 +682,6 @@ function renderLineForm(container, data) {
     gapRatio: 0.4,
     fx: 'none',
     fxAmount: 0.5,
-    fxVolume: 1,
     platformSpeed: 90,
     platformLength: Math.max(minPlatformLength, Math.min(120, maxPlatformLength)),
     ...data
@@ -720,7 +701,6 @@ function renderLineForm(container, data) {
 
   const amountLabel   = FX_AMOUNT_LABELS[d.fx] ?? null;
   const showAmount    = amountLabel !== null;
-  const showFxVolume  = d.fx !== 'none';
 
   container.innerHTML = `
     <div class="form-group">
@@ -765,13 +745,6 @@ function renderLineForm(container, data) {
       <div class="bpm-row">
         <input type="range" id="prop-fxamount" value="${d.fxAmount}" min="0" max="1" step="0.05" />
         <span id="fxamount-display">${Math.round(d.fxAmount * 100)}%</span>
-      </div>
-    </div>
-    <div class="form-group" id="fxvolume-group" style="${showFxVolume ? '' : 'display:none'}">
-      <label>Volumen de efecto</label>
-      <div class="bpm-row">
-        <input type="range" id="prop-fxvolume" value="${d.fxVolume}" min="0" max="4" step="0.05" />
-        <span id="fxvolume-display">${Math.round(d.fxVolume * 100)}%</span>
       </div>
     </div>
     `;
@@ -819,26 +792,18 @@ function renderLineForm(container, data) {
     updateObjectData(data.id, { fx });
     const label = FX_AMOUNT_LABELS[fx] ?? null;
     const grp   = document.getElementById('fxamount-group');
-    const volumeGrp = document.getElementById('fxvolume-group');
     if (label) {
       document.getElementById('fxamount-label').textContent = label;
       grp.style.display = '';
     } else {
       grp.style.display = 'none';
     }
-    volumeGrp.style.display = fx === 'none' ? 'none' : '';
   });
 
   document.getElementById('prop-fxamount').addEventListener('input', (e) => {
     const val = parseFloat(e.target.value);
     document.getElementById('fxamount-display').textContent = Math.round(val * 100) + '%';
     updateObjectData(data.id, { fxAmount: val });
-  });
-
-  document.getElementById('prop-fxvolume').addEventListener('input', (e) => {
-    const val = parseFloat(e.target.value);
-    document.getElementById('fxvolume-display').textContent = Math.round(val * 100) + '%';
-    updateObjectData(data.id, { fxVolume: val });
   });
 
 }
@@ -848,7 +813,7 @@ export function createPortal(x, y) {
   const portal = {
     id: 'portal_' + Date.now(),
     x, y,
-    note: 'C', scale: 'pentatonic', mode: 'random', rpm: 60, size: 15, volume: -6,
+    note: 'C', scale: 'pentatonic', mode: 'random', rpm: 60, size: 15,
     synthPreset: DEFAULT_PRESET,
     yamlConfig: getPresetYaml(DEFAULT_PRESET),
     parsedSynthDef
