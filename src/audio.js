@@ -4,6 +4,7 @@ import { spawnBall } from './physics.js';
 
 const audioContexts = new Map(); // portalId -> { channel, synth, loop }
 
+let MASTER_MONO   = null;
 let MASTER_REVERB = null;
 let MASTER_DELAY  = null;
 
@@ -43,13 +44,15 @@ function makeSynth(synthDef, channel) {
 export async function initAudio() {
   await Tone.start();
 
+  MASTER_MONO = new Tone.Mono().toDestination();
+
   // Ambient master reverb (subtle, always on)
-  MASTER_REVERB = new Tone.Reverb({ decay: 1.5, wet: 0.12 }).toDestination();
+  MASTER_REVERB = new Tone.Reverb({ decay: 1.5, wet: 0.12 }).connect(MASTER_MONO);
   MASTER_DELAY  = new Tone.FeedbackDelay('8n', 0.1).connect(MASTER_REVERB);
   await MASTER_REVERB.ready;
 
   // Dedicated reverb FX bus — high quality, separate from master chain
-  FX_REVERB_NODE = new Tone.Reverb({ decay: 4, preDelay: 0.02, wet: 1 }).toDestination();
+  FX_REVERB_NODE = new Tone.Reverb({ decay: 4, preDelay: 0.02, wet: 1 }).connect(MASTER_MONO);
   await FX_REVERB_NODE.ready;
   FX_REVERB_SYNTH = new Tone.PolySynth(Tone.MonoSynth, {
     oscillator: { type: 'sine' },
@@ -58,7 +61,7 @@ export async function initAudio() {
   }).connect(FX_REVERB_NODE);
 
   // Dedicated echo FX bus — real FeedbackDelay with controlled feedback
-  FX_ECHO_NODE = new Tone.FeedbackDelay({ delayTime: 0.25, feedback: 0.35, wet: 0.85 }).toDestination();
+  FX_ECHO_NODE = new Tone.FeedbackDelay({ delayTime: 0.25, feedback: 0.35, wet: 0.85 }).connect(MASTER_MONO);
   FX_ECHO_SYNTH = new Tone.PolySynth(Tone.MonoSynth, {
     oscillator: { type: 'sine' },
     envelope: { attack: 0.005, decay: 0.25, sustain: 0.04, release: 0.6 },
@@ -71,13 +74,13 @@ export async function initAudio() {
     filter: { frequency: 2800, type: 'lowpass' },
     envelope: { attack: 0.008, decay: 0.6, sustain: 0.12, release: 0.8 },
     volume: -9
-  }).toDestination();
+  }).connect(MASTER_MONO);
 
   FX_PITCH_SYNTH = new Tone.PolySynth(Tone.MonoSynth, {
     oscillator: { type: 'triangle' },
     envelope: { attack: 0.004, decay: 0.18, sustain: 0.05, release: 0.45 },
     volume: -10
-  }).toDestination();
+  }).connect(MASTER_MONO);
 
   // lookAhead controls the Transport scheduler (ball-spawning loops).
   // Higher = more stable under CPU load. Does NOT affect collision sounds below.
@@ -102,8 +105,7 @@ export function updateBpm(bpm) {
 
 export function createPortalAudio(portal) {
   if (!MASTER_DELAY) return; // audio not yet initialized
-  // Crear canal independiente y rutear directamente al output (latencia CERO)
-  const channel = new Tone.Channel({ volume: portal.volume ?? -6, pan: 0 }).toDestination();
+  const channel = new Tone.Channel({ volume: portal.volume ?? -6, pan: 0 }).connect(MASTER_MONO);
   // Enviar señal al reverb en paralelo
   channel.connect(MASTER_REVERB);
   const synth = makeSynth(portal.parsedSynthDef, channel);
